@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="UTF-8">
+  	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  	<title>Registro de usuario</title>
+  	<link rel="stylesheet" href="css/registro.css">
+	<link rel="manifest" href="manifest.json">
+	<meta name="theme-color" content="#2196f3">
+	<script src="app.js"></script>
+</head>
+<body>
+  	<div class="container">
+
+    <!-- LOGO -->
+    <div class="logo-container">
+    	<img src="assets/logo.png" alt="Logo" class="logo">
+    </div>
+
+    <h2>Registro</h2>
+
+    <form id="registerForm" action="#">
+      	<label for="nombre">Nombres y Apellidos:</label>
+      	<input type="text" id="nombre" placeholder="Ingresa tu nombre" required>
+
+      	<label for="edad">Edad:</label>
+      	<input type="number" id="edad" placeholder="Ej. 25" required>
+
+      	<label for="estatura">Estatura (m):</label>
+      	<input type="number" step="0.01" id="estatura" placeholder="Ej. 1.65" required>
+
+      	<label for="peso">Peso (kg):</label>
+      	<input type="number" id="peso" placeholder="Ej. 60" required>
+
+      	<label for="emailreg">Correo electrónico:</label>
+      	<input type="email" id="emailreg" placeholder="ejemplo@correo.com" required>
+
+      	<label for="passwordreg">Contraseña:</label>
+      	<input type="password" id="passwordreg" placeholder="Mínimo 6 caracteres" required>
+
+      	<button type="submit" id="registro">Registrarse</button>
+    </form>
+
+    <p>¿Ya tienes una cuenta? <a href="login.html">Inicia sesión aquí</a>.</p>
+
+  	</div>
+
+  	<script type="module" src="scripts/registro.js"></script>
+</body>
+</html>

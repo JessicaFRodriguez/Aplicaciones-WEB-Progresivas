@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Salud & Ejercicio - Tu Bienestar Inteligente</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="css/home.css">
+
+  <!-- ====== CONFIGURACIÓN PWA ====== -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#007bff">
+  <meta name="description" content="Aplicación de salud y ejercicio - VivePlen">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <link rel="icon" href="assets/icons/icon-192.png" type="image/png">
+  <script src="app.js"></script>
+</head>
+
+<body>
+
+  <!-- === HEADER FIJO CON NAVEGACIÓN === -->
+  <header>
+    <h1>Salud & Ejercicio</h1>
+    <nav>
+      <a href="#inicio">Inicio</a>
+      <a href="#productos">Modelos</a>
+      <a href="#datos">Datos Salud</a>
+      <a href="#imc">IMC</a>
+      <a href="#ejercicios">Ejercicios</a>
+    </nav>
+    <button id="cerrarSesion">Cerrar sesión</button>
+  </header>
+
+  <main>
+
+    <!-- === SECCIÓN 1: HERO === -->
+    <section id="inicio" class="hero">
+      <h2>Tu bienestar al alcance de un clic</h2>
+      <p>
+        Con nuestro dispositivo inteligente <strong>VivePlen</strong>, podrás conocer en tiempo real tus niveles de estrés,
+        ritmo cardíaco y oxigenación.  
+        Mejora tu bienestar con información precisa y personalizada que te ayuda a cuidar cuerpo y mente. Vive bien, VIVEPLEN.
+      </p>
+      <button onclick="document.getElementById('productos').scrollIntoView({behavior:'smooth'})">
+        Conocer nuestros modelos
+      </button>
+    </section>
+
+    <!-- === SECCIÓN 2: CARRUSEL DE MODELOS === -->
+    <section id="productos">
+      <h2>Modelos VivePlen</h2>
+      <p>Elige el modelo que mejor se adapta a tu estilo de vida. Todos nuestros dispositivos cuentan con sensores de última generación para medir tu bienestar.</p>
+      
+      <div class="carrusel-container">
+        <button class="carrusel-btn prev">❮</button>
+        
+        <div class="carrusel">
+          <div class="producto-card">
+            <img src="img/modelo-basic.png" alt="VivePlen Basic">
+            <h3>VivePlen Basic</h3>
+            <p>Monitoreo de ritmo cardíaco y oxigenación. Ideal para un uso diario y control básico de salud.</p>
+            <p class="precio">$999 MXN</p>
+            <button class="agregar-carrito" data-nombre="VivePlen Basic" data-precio="999">Agregar al carrito</button>
+          </div>
+
+          <div class="producto-card">
+            <img src="img/modelo-plus.png" alt="VivePlen Plus">
+            <h3>VivePlen Plus</h3>
+            <p>Incluye medición de estrés (HRV) y conexión con app móvil. Perfecto para quienes buscan equilibrio mente-cuerpo.</p>
+            <p class="precio">$1,599 MXN</p>
+            <button class="agregar-carrito" data-nombre="VivePlen Plus" data-precio="1599">Agregar al carrito</button>
+          </div>
+
+          <div class="producto-card">
+            <img src="img/modelo-pro.png" alt="VivePlen Pro">
+            <h3>VivePlen Pro</h3>
+            <p>Seguimiento avanzado de sueño, estrés, frecuencia cardíaca y análisis de rendimiento físico.</p>
+            <p class="precio">$2,499 MXN</p>
+            <button class="agregar-carrito" data-nombre="VivePlen Pro" data-precio="2499">Agregar al carrito</button>
+          </div>
+
+          <div class="producto-card">
+            <img src="img/modelo-ultra.png" alt="VivePlen Ultra">
+            <h3>VivePlen Ultra</h3>
+            <p>Incluye GPS, monitor de actividad 24/7 y análisis avanzado de sueño y estrés.</p>
+            <p class="precio">$3,199 MXN</p>
+            <button class="agregar-carrito" data-nombre="VivePlen Ultra" data-precio="3199">Agregar al carrito</button>
+          </div>
+
+          <div class="producto-card">
+            <img src="img/modelo-max.png" alt="VivePlen Max">
+            <h3>VivePlen Max</h3>
+            <p>Sensor de presión arterial, monitor de oxígeno, ritmo cardíaco y ejercicios guiados.</p>
+            <p class="precio">$3,899 MXN</p>
+            <button class="agregar-carrito" data-nombre="VivePlen Max" data-precio="3899">Agregar al carrito</button>
+          </div>
+
+          <div class="producto-card">
+            <img src="img/modelo-elite.png" alt="VivePlen Elite">
+            <h3>VivePlen Elite</h3>
+            <p>Versión premium con inteligencia artificial para recomendaciones de salud personalizadas y análisis completo de bienestar.</p>
+            <p class="precio">$4,999 MXN</p>
+            <button class="agregar-carrito" data-nombre="VivePlen Elite" data-precio="4999">Agregar al carrito</button>
+          </div>
+        </div>
+
+        <button class="carrusel-btn next">❯</button>
+      </div>
+
+      <!-- === CARRITO === -->
+      <div id="carrito" class="carrito">
+        <h3>🛒 Tu carrito</h3>
+        <ul id="listaCarrito"></ul>
+        <p id="totalCarrito">Total: $0 MXN</p>
+        <button id="comprarBtn">Finalizar compra</button>
+      </div>
+    </section>
+
+    <!-- === SECCIÓN 3: DATOS IOT === -->
+    <section id="datos">
+      <h2>Datos de tu Salud</h2>
+      <div class="iot-data">
+        <div class="card">
+          <h3>Ritmo Cardíaco</h3>
+          <p id="heartRate">-- bpm</p>
+        </div>
+        <div class="card">
+          <h3>Oxigenación</h3>
+          <p id="oxygen">-- %</p>
+        </div>
+        <div class="card">
+          <h3>Estrés (HRV)</h3>
+          <p id="stress">--</p>
+        </div>
+      </div>
+      <p id="stressAdvice" class="advice"></p>
+    </section>
+
+    <!-- === SECCIÓN 4: CALCULADORA DE IMC === -->
+    <section id="imc">
+      <h2>Calculadora de IMC</h2>
+      <div class="imc-box">
+        <label>Peso (kg): <input type="number" id="peso" placeholder="Ej: 65"></label>
+        <label>Estatura (m): <input type="number" step="0.01" id="estatura" placeholder="Ej: 1.70"></label>
+        <button id="calcIMCBtn">Calcular IMC</button>
+      </div>
+      <p id="resultadoIMC" class="resultado"></p>
+
+      <div id="tablaIMC" class="tabla-imc">
+        <h3>Clasificación del IMC</h3>
+        <table>
+          <thead>
+            <tr><th>Categoría</th><th>IMC</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Bajo peso</td><td>&lt; 18.5</td></tr>
+            <tr><td>Normal</td><td>18.5 - 24.9</td></tr>
+            <tr><td>Sobrepeso</td><td>25 - 29.9</td></tr>
+            <tr><td>Obesidad</td><td>≥ 30</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- === SECCIÓN 5: RECOMENDACIONES DE EJERCICIOS === -->
+    <section id="ejercicios">
+      <h2>Ejercicios Recomendados</h2>
+      <p>Selecciona tu grupo de edad y se generarán ejercicios personalizados según tu peso e IMC.</p>
+
+      <div class="edad-grid">
+        <div class="edad-card" data-edad="14-18">
+          <img src="img/edad-joven.jpg" alt="Ejercicios adolescentes">
+          <h3>14 - 18 años</h3>
+        </div>
+        <div class="edad-card" data-edad="18-25">
+          <img src="img/edad-joven-adulto.jpg" alt="Ejercicios jóvenes adultos">
+          <h3>18 - 25 años</h3>
+        </div>
+        <div class="edad-card" data-edad="26-40">
+          <img src="img/edad-adulto.jpg" alt="Ejercicios adultos">
+          <h3>26 - 40 años</h3>
+        </div>
+        <div class="edad-card" data-edad="41-60">
+          <img src="img/edad-maduro.jpg" alt="Ejercicios adultos mayores">
+          <h3>41 - 60 años</h3>
+        </div>
+        <div class="edad-card" data-edad="60+">
+          <img src="img/edad-anciano.jpg" alt="Ejercicios mayores">
+          <h3>60+ años</h3>
+        </div>
+      </div>
+
+      <div id="resultadoEjercicios" class="ejercicios-lista">
+        <h3>Ejercicios recomendados</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Ejercicio</th>
+              <th>Duración / Repeticiones</th>
+              <th>Beneficio</th>
+            </tr>
+          </thead>
+          <tbody id="tablaEjercicios"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Scripts -->
+  <script src="scripts/home.js" type="module"></script>
+  <script src="app.js"></script>
+</body>
+</html>
