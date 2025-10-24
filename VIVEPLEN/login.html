@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de sesión</title>
+    <link href="css/login.css" rel="stylesheet" type="text/css" />
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2196f3">
+    <script src="app.js"></script>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- LOGO -->
+        <div class="logo-container">
+            <img src="assets/logo.png" alt="Logo" class="logo">
+        </div>
+
+        <h2>Inicio de sesión</h2>
+
+        <form id="loginForm">
+            <label for="emaillog">Correo:</label>
+            <input type="email" id="emaillog" placeholder="ejemplo@correo.com" required>
+
+            <label for="passwordlog">Contraseña:</label>
+            <input type="password" id="passwordlog" placeholder="********" required>
+
+            <button type="button" id="login">Ingresar</button>
+            <button type="button" id="cerrar">Cerrar Sesión</button>
+        </form>
+
+        <p>¿No tienes una cuenta? <a href="registro.html">Regístrate aquí</a>.</p>
+
+    </div>
+
+    <script type="module" src="scripts/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administrador</title>
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <header>
+    <h1>Panel de Administrador</h1>
+    <button id="logoutBtn">Cerrar sesión</button>
+  </header>
+
+  <main>
+    <h2>Usuarios Registrados</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Edad</th>
+          <th>Estatura</th>
+          <th>Peso</th>
+          <th>Rol</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="usuariosTabla"></tbody>
+    </table>
+  </main>
+
+  <script type="module" src="scripts/admin.js"></script>
+</body>
+</html>
