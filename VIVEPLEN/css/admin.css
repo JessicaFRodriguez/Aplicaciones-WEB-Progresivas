@@ -1,0 +1,155 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+
+:root {
+  --color-fondo: #f4f6fb;
+  --color-header: #2c3e50;
+  --color-texto: #2c3e50;
+  --color-boton-guardar: #27ae60;
+  --color-boton-guardar-hover: #2ecc71;
+  --color-boton-eliminar: #c0392b;
+  --color-boton-eliminar-hover: #e74c3c;
+  --color-boton-logout: #2980b9;
+  --color-boton-logout-hover: #3498db;
+  --color-borde-tabla: #bdc3c7;
+  --color-fondo-tabla: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header */
+header {
+  background-color: var(--color-header);
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+header h1 {
+  font-size: 1.6rem;
+}
+
+header button {
+  background-color: var(--color-boton-logout);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+header button:hover {
+  background-color: var(--color-boton-logout-hover);
+  transform: translateY(-2px);
+}
+
+/* Main */
+main {
+  flex: 1;
+  padding: 2rem;
+}
+
+main h2 {
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+}
+
+/* Tabla */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--color-fondo-tabla);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+thead {
+  background-color: var(--color-header);
+  color: white;
+}
+
+thead th {
+  padding: 0.9rem 1rem;
+  text-align: left;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+th, td {
+  padding: 0.8rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-borde-tabla);
+}
+
+/* Fila hover */
+tbody tr:hover {
+  background-color: #ecf0f1;
+  transition: 0.2s;
+}
+
+/* Inputs y select */
+td input, td select {
+  padding: 0.4rem;
+  width: 100%;
+  border: 1px solid #bdc3c7;
+  border-radius: 0.3rem;
+  font-size: 0.9rem;
+}
+
+/* Acciones */
+td:last-child {
+  background-color: var(--color-header);
+  text-align: center;
+}
+
+td:last-child button {
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.3rem;
+  margin: 0.2rem;
+  cursor: pointer;
+  transition: 0.2s;
+  font-weight: 500;
+}
+
+.saveBtn {
+  background-color: var(--color-boton-guardar);
+}
+
+.saveBtn:hover {
+  background-color: var(--color-boton-guardar-hover);
+}
+
+.deleteBtn {
+  background-color: var(--color-boton-eliminar);
+}
+
+.deleteBtn:hover {
+  background-color: var(--color-boton-eliminar-hover);
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+  header h1 { font-size: 1.3rem; }
+  main { padding: 1rem; }
+  table { font-size: 0.9rem; }
+}

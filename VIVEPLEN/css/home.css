@@ -1,0 +1,389 @@
+/* === TIPOGRAFÍA Y VARIABLES === */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+:root {
+  --color-fondo: #f5f8ff;
+  --color-primario: #4a90e2;
+  --color-secundario: #2ecc71;
+  --color-acento: #f39c12;
+  --color-peligro: #e74c3c;
+  --sombra: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  background: var(--color-fondo);
+  color: #333;
+  scroll-behavior: smooth;
+}
+
+/* === HEADER FIJO === */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: var(--color-primario);
+  color: white;
+  box-shadow: var(--sombra);
+}
+
+header nav a {
+  margin: 0 0.8rem;
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+header nav a:hover {
+  color: var(--color-acento);
+}
+
+header button {
+  background: white;
+  color: var(--color-primario);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+header button:hover {
+  background: var(--color-acento);
+  color: white;
+}
+
+/* === SECCIONES === */
+main {
+  padding: 2rem 5%;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+section {
+  background: white;
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: var(--sombra);
+  transition: transform 0.3s ease;
+}
+
+section:hover {
+  transform: translateY(-4px);
+}
+
+section h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+  color: var(--color-primario);
+  font-size: 1.5rem;
+}
+
+/* === BOTONES === */
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+/* === IOT CARDS === */
+.iot-data {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.card {
+  width: 160px;
+  padding: 1rem;
+  border-radius: 15px;
+  background: #eaf2ff;
+  text-align: center;
+  box-shadow: var(--sombra);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.card h3 {
+  margin-bottom: 0.5rem;
+  color: var(--color-primario);
+}
+
+.card p {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.advice {
+  margin-top: 1rem;
+  text-align: center;
+  font-style: italic;
+  color: #555;
+}
+
+/* === IMC === */
+.imc-box {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+input {
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  width: 100px;
+}
+
+.resultado {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.2rem;
+  margin-top: 1rem;
+}
+
+/* === TABLA DE IMC === */
+.tabla-imc table {
+  width: 60%;
+  margin: 1rem auto;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+.tabla-imc th {
+  background: var(--color-primario);
+  color: white;
+  padding: 0.6rem;
+}
+
+.tabla-imc td {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+}
+
+.tabla-imc tr:nth-child(even) {
+  background: #f7faff;
+}
+
+/* === TARJETAS DE EDAD === */
+.edad-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.edad-card {
+  background: #eaf2ff;
+  border-radius: 15px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: var(--sombra);
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.edad-card:hover {
+  transform: translateY(-6px);
+  background: var(--color-primario);
+  color: white;
+}
+
+.edad-card img {
+  width: 80%;
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+}
+
+/* === TABLA DE EJERCICIOS === */
+.ejercicios-lista table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.ejercicios-lista th {
+  background: var(--color-primario);
+  color: white;
+  padding: 0.6rem;
+}
+
+.ejercicios-lista td {
+  padding: 0.6rem;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+}
+
+.ejercicios-lista tr:hover {
+  background: #f0f6ff;
+}
+
+/* === CARRUSEL DE PRODUCTOS === */
+.carrusel-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.carrusel {
+  display: flex;
+  overflow-x: hidden;
+  gap: 20px;
+  scroll-behavior: smooth;
+  width: 100%;
+}
+
+.producto-card {
+  min-width: 280px;
+  max-width: 280px;
+  background: #eaf2ff;
+  border-radius: 15px;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+.producto-card:hover {
+  transform: translateY(-5px);
+}
+
+.carrusel-btn {
+  background: var(--color-primario);
+  color: white;
+  border: none;
+  font-size: 1.5rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.carrusel-btn:hover {
+  background: var(--color-acento);
+}
+
+/* === CARRITO COMPACTO Y CENTRADO ABAJO DEL CARRUSEL === */
+.carrito {
+  margin: 2rem auto 0 auto; /* centrado horizontal */
+  padding: 0.8rem 1rem;
+  background: #eaf2ff;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  width: 90%;
+  max-width: 320px;
+  font-size: 0.9rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.carrito h3 {
+  margin-bottom: 0.6rem;
+  font-size: 1.2rem;
+  color: var(--color-primario);
+}
+
+.carrito ul {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.carrito ul li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid #ccc;
+  font-weight: 500;
+}
+
+.carrito ul li button.eliminar {
+  background: var(--color-peligro);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.carrito ul li button.eliminar:hover {
+  background: darkred;
+}
+
+.carrito button#comprarBtn {
+  width: 100%;
+  margin-top: 0.5rem;
+  background: var(--color-secundario);
+  color: white;
+  font-weight: 600;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.carrito button#comprarBtn:hover {
+  opacity: 0.9;
+}
+
+/* === RESPONSIVE === */
+@media(max-width:768px){
+  .iot-data {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .imc-box {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .edad-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  .tabla-imc table {
+    width: 90%;
+  }
+
+  .carrito {
+    max-width: 100%;
+    font-size: 0.85rem;
+  }
+}
