@@ -1,15 +1,11 @@
 // ===============================
 // ADMIN.JS - Render Ready Version
 // ===============================
-
-// 🔗 Detecta automáticamente si está en localhost o en Render
 const BACKEND_URL = window.location.origin;
 
-// Elementos principales
 const usersTable = document.getElementById("usuariosTabla");
 const logoutBtn = document.getElementById("logoutBtn");
 
-// Modal y formulario de edición
 const editModal = document.getElementById("editModal");
 const closeModal = document.getElementById("closeModal");
 const editForm = document.getElementById("editForm");
@@ -46,7 +42,6 @@ async function loadUsers() {
       )
       .join("");
 
-    // Asignar eventos
     document.querySelectorAll(".delete-btn").forEach((btn) => {
       btn.addEventListener("click", () => deleteUser(btn.dataset.uid));
     });
@@ -98,6 +93,7 @@ function editUser(uid) {
   document.getElementById("editHeight").value = row.cells[2].textContent;
   document.getElementById("editWeight").value = row.cells[3].textContent;
   document.getElementById("editRole").value = row.cells[5].textContent;
+  document.getElementById("editPassword").value = "";
 
   editModal.style.display = "flex";
 }
@@ -122,8 +118,13 @@ editForm.addEventListener("submit", async (e) => {
     age: parseInt(document.getElementById("editAge").value) || 0,
     height: parseFloat(document.getElementById("editHeight").value) || 0,
     weight: parseFloat(document.getElementById("editWeight").value) || 0,
-    role: document.getElementById("editRole").value,
+    role: document.getElementById("editRole").value
   };
+
+  const newPassword = document.getElementById("editPassword").value.trim();
+  if (newPassword) {
+    payload.password = newPassword;
+  }
 
   try {
     const res = await fetch(`${BACKEND_URL}/api/users/${uid}`, {

@@ -54,11 +54,7 @@ app.use(express.json());
 // ===============================
 // === SERVIR FRONTEND ===
 app.use(express.static(path.join(__dirname, "../")));
-
-// --- Página principal -> login.html ---
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../login.html"));
-});
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "../login.html")));
 
 // ===============================
 // === RUTAS API ===
@@ -67,9 +63,7 @@ app.get("/", (req, res) => {
 app.post("/api/register", async (req, res) => {
   const { name, age, height, weight, email, password } = req.body;
   if (!email || !password || !name) {
-    return res
-      .status(400)
-      .json({ success: false, error: "Missing required fields" });
+    return res.status(400).json({ success: false, error: "Missing required fields" });
   }
 
   try {
@@ -79,9 +73,7 @@ app.post("/api/register", async (req, res) => {
     } catch {}
 
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ success: false, error: "Email already registered" });
+      return res.status(400).json({ success: false, error: "Email already registered" });
     }
 
     const userRecord = await admin.auth().createUser({ email, password });
@@ -107,17 +99,13 @@ app.post("/api/register", async (req, res) => {
 // --- LOGIN ---
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password)
-    return res
-      .status(400)
-      .json({ success: false, error: "Email and password required" });
+  if (!email || !password) return res.status(400).json({ success: false, error: "Email and password required" });
 
   try {
     const userRecord = await admin.auth().getUserByEmail(email);
     const userDoc = await db.collection("users").doc(userRecord.uid).get();
 
-    if (!userDoc.exists)
-      return res.status(404).json({ success: false, error: "User not found" });
+    if (!userDoc.exists) return res.status(404).json({ success: false, error: "User not found" });
 
     const userData = userDoc.data();
     res.json({ success: true, uid: userDoc.id, role: userData.role || "user" });
@@ -128,9 +116,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 // --- LOGOUT ---
-app.post("/api/logout", (req, res) => {
-  res.json({ success: true });
-});
+app.post("/api/logout", (req, res) => res.json({ success: true }));
 
 // --- VALIDAR SESIÓN ---
 app.get("/api/session", async (req, res) => {
@@ -162,10 +148,7 @@ app.get("/api/session", async (req, res) => {
 app.get("/api/users", async (req, res) => {
   try {
     const snapshot = await db.collection("users").get();
-    const users = snapshot.docs.map((doc) => ({
-      uid: doc.id,
-      ...doc.data(),
-    }));
+    const users = snapshot.docs.map((doc) => ({ uid: doc.id, ...doc.data() }));
     res.json(users);
   } catch (err) {
     console.error("Error getting users:", err);
@@ -173,13 +156,25 @@ app.get("/api/users", async (req, res) => {
   }
 });
 
+// --- ACTUALIZAR USUARIO (ADMIN) con contraseña ---
 app.put("/api/users/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, age, height, weight, role, password } = req.body;
+
   try {
-    await db.collection("users").doc(req.params.id).update(req.body);
+    // Actualizar Firestore
+    const updateData = { name, age, height, weight, role };
+    await db.collection("users").doc(id).update(updateData);
+
+    // Actualizar contraseña en Firebase Auth si se proporcionó
+    if (password && password.trim() !== "") {
+      await admin.auth().updateUser(id, { password });
+    }
+
     res.json({ success: true });
   } catch (err) {
     console.error("Error updating user:", err);
-    res.status(500).json({ error: "Could not update user" });
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -199,12 +194,7 @@ app.post("/api/update-bmi", async (req, res) => {
   if (!uid) return res.status(400).json({ success: false, error: "UID required" });
 
   try {
-    await db.collection("users").doc(uid).update({
-      bmi,
-      bmiCategory,
-      weight,
-      height,
-    });
+    await db.collection("users").doc(uid).update({ bmi, bmiCategory, weight, height });
     res.json({ success: true });
   } catch (err) {
     console.error("Error updating BMI:", err);
@@ -234,8 +224,7 @@ app.get("/api/products", async (req, res) => {
 // --- ACTUALIZAR CARRITO ---
 app.post("/api/update-cart", async (req, res) => {
   const { uid, carrito } = req.body;
-  if (!uid)
-    return res.status(400).json({ success: false, error: "UID required" });
+  if (!uid) return res.status(400).json({ success: false, error: "UID required" });
 
   try {
     await db.collection("users").doc(uid).update({ cart: carrito });
@@ -254,6 +243,4 @@ app.get(/^(?!\/api).*$/, (req, res) => {
 
 // ===============================
 // === INICIAR SERVIDOR ===
-app.listen(PORT, () => {
-  console.log(`Server + Frontend corriendo en: http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server + Frontend corriendo en: http://localhost:${PORT}`));
