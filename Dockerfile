@@ -3,46 +3,31 @@
 # =============================
 FROM node:18 AS build
 
-# Directorio de trabajo dentro del contenedor
-WORKDIR /app/server
+WORKDIR /app
 
-# Copiamos dependencias del backend
-COPY server/package*.json ./
-RUN npm install
+# Copiar archivos de backend
+COPY server/package*.json ./server/
+RUN cd server && npm install
 
-# Copiamos el código del backend
-COPY server .
+# Copiar todo el proyecto (frontend + backend)
+COPY . .
 
 # =============================
-# Etapa final - App completa
+# Etapa final
 # =============================
 FROM node:18
 
 WORKDIR /app
 
-# Copiamos el backend ya listo
-COPY --from=build /app/server ./server
+# Copiar resultado del build
+COPY --from=build /app .
 
-# Copiamos el frontend (html, css, js, imágenes, assets, etc.)
-COPY ./*.html ./
-COPY ./css ./css
-COPY ./img ./img
-COPY ./scripts ./scripts
-COPY ./assets ./assets
-COPY ./assets/icons ./assets/icons
-COPY ./app.js ./
-COPY ./manifest.json ./
-COPY ./sw.js ./
-
-# Eliminamos la carpeta login dentro de assets (ya no se necesita)
-RUN rm -rf ./assets/login || true
-
-# Instalamos dependencias del backend
+# Instalar dependencias del backend
 WORKDIR /app/server
 RUN npm install --omit=dev
 
-# Exponemos el puerto del servidor
+# Exponer puerto
 EXPOSE 3000
 
-# Iniciamos el servidor
+# Ejecutar servidor
 CMD ["node", "index.js"]

@@ -12,9 +12,20 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const serviceAccount = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "firebase-credentials.json"))
-);
+let serviceAccount = null;
+
+// Intentar cargar desde archivo local (para desarrollo)
+const credentialsPath = path.join(__dirname, "firebase-credentials.json");
+if (fs.existsSync(credentialsPath)) {
+  serviceAccount = JSON.parse(fs.readFileSync(credentialsPath, "utf8"));
+  console.log("Cargando credenciales desde archivo local");
+} else if (process.env.FIREBASE_CONFIG) {
+  serviceAccount = JSON.parse(process.env.FIREBASE_CONFIG);
+  console.log("Cargando credenciales desde variable de entorno FIREBASE_CONFIG");
+} else {
+  console.error("No se encontraron credenciales de Firebase");
+  process.exit(1);
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
