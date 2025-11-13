@@ -1,47 +1,66 @@
 // ===============================
-// REGISTRO.JS - English fields + Firestore users
+// LOGIN.JS - Versión segura
 // ===============================
 
 document.addEventListener("DOMContentLoaded", () => {
-  const registerBtn = document.getElementById("registro");
-  const form = document.getElementById("registerForm");
+  const loginBtn = document.getElementById('login');
+  const logoutBtn = document.getElementById('cerrar');
+  const emailInput = document.getElementById('emaillog');
+  const passwordInput = document.getElementById('passwordlog');
 
-  if (!registerBtn || !form) {
-    console.error("No se encontró el formulario o el botón de registro");
+  // --- Verificar si existen los elementos ---
+  if (!loginBtn || !emailInput || !passwordInput) {
+    console.warn("⚠️ No se encontró el formulario o el botón de inicio de sesión");
     return;
   }
 
-  registerBtn.addEventListener("click", async (e) => {
-    e.preventDefault();
+  // --- LOGIN ---
+  loginBtn.addEventListener('click', async () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
 
-    const name = document.getElementById("name").value.trim();
-    const age = document.getElementById("age").value.trim();
-    const height = document.getElementById("height").value.trim();
-    const weight = document.getElementById("weight").value.trim();
-    const email = document.getElementById("emailreg").value.trim();
-    const password = document.getElementById("passwordreg").value.trim();
-
-    if (!name || !age || !height || !weight || !email || !password) {
-      alert("Please fill in all fields.");
-      return;
+    if (!email || !password) {
+      return alert('Please enter your email and password.');
     }
 
     try {
-      const res = await fetch("http://localhost:3000/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, age, height, weight, email, password }),
+      const res = await fetch('https://aplicaciones-web-progresivas-5cbe.onrender.com/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
+
       if (data.success) {
-        alert("User registered successfully.");
-        window.location.href = "login.html";
+        localStorage.setItem('userId', data.uid);
+        if (data.role === 'admin') {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'home.html';
+        }
       } else {
-        alert("Error: " + data.error);
+        alert('Login error: ' + data.error);
       }
     } catch (err) {
-      alert("Connection error: " + err.message);
+      alert('Connection error: ' + err.message);
     }
   });
+
+  // --- LOGOUT ---
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        const res = await fetch('https://aplicaciones-web-progresivas-5cbe.onrender.com/api/logout', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          alert('Session closed');
+          localStorage.removeItem('userId');
+          window.location.href = 'login.html';
+        }
+      } catch (err) {
+        alert('Error closing session: ' + err.message);
+      }
+    });
+  }
 });

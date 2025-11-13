@@ -1,8 +1,8 @@
 // ===============================
-// SERVICE WORKER - VivePlen PWA
+// SERVICE WORKER - VivePlen PWA (seguro)
 // ===============================
 
-const CACHE_NAME = "viveplen-v5"; // Aumenta versión al hacer cambios
+const CACHE_NAME = "viveplen-v6";
 const DYNAMIC_CACHE = "viveplen-dynamic-v3";
 
 const URLS_TO_CACHE = [
@@ -39,11 +39,20 @@ const URLS_TO_CACHE = [
 // --- INSTALACIÓN ---
 self.addEventListener("install", e => {
   console.log("[SW] Instalando y cacheando recursos...");
+
   e.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(URLS_TO_CACHE))
-      .then(() => self.skipWaiting())
-      .catch(err => console.error("Error al cachear archivos:", err))
+    caches.open(CACHE_NAME).then(async cache => {
+      const results = await Promise.allSettled(
+        URLS_TO_CACHE.map(url => cache.add(url))
+      );
+      const fails = results
+        .map((r, i) => (r.status === "rejected" ? URLS_TO_CACHE[i] : null))
+        .filter(Boolean);
+      if (fails.length) {
+        console.warn("[SW] Archivos que no se pudieron cachear:", fails);
+      }
+      self.skipWaiting();
+    })
   );
 });
 
@@ -54,8 +63,8 @@ self.addEventListener("activate", e => {
     caches.keys().then(keys =>
       Promise.all(
         keys
-          .filter(key => key !== CACHE_NAME && key !== DYNAMIC_CACHE)
-          .map(key => caches.delete(key))
+          .filter(k => k !== CACHE_NAME && k !== DYNAMIC_CACHE)
+          .map(k => caches.delete(k))
       )
     )
   );
@@ -64,25 +73,24 @@ self.addEventListener("activate", e => {
 
 // --- INTERCEPTAR PETICIONES ---
 self.addEventListener("fetch", e => {
-  const requestUrl = new URL(e.request.url);
+  const url = new URL(e.request.url);
 
-  // Evitar cachear llamadas a la API (Render o localhost)
+  // No cachear peticiones al backend
   if (
-    requestUrl.pathname.startsWith("/api/") ||
-    requestUrl.origin.includes("onrender.com") && requestUrl.pathname.startsWith("/api/") ||
-    requestUrl.origin.includes("localhost:3000")
+    url.origin.includes("localhost:3000") ||
+    (url.origin.includes("onrender.com") && url.pathname.startsWith("/api/"))
   ) {
-    return; // no intercepta peticiones al backend
+    return;
   }
 
   e.respondWith(
     fetch(e.request)
-      .then(response => {
-        const clone = response.clone();
-        caches.open(DYNAMIC_CACHE).then(cache => cache.put(e.request, clone));
-        return response;
+      .then(res => {
+        const clone = res.clone();
+        caches.open(DYNAMIC_CACHE).then(c => c.put(e.request, clone));
+        return res;
       })
-      .catch(() => caches.match(e.request)) // si no hay red, usa cache
+      .catch(() => caches.match(e.request))
   );
 });
 
