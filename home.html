@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Salud & Ejercicio - Tu Bienestar Inteligente</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#007bff">
+  <meta name="description" content="Aplicación de salud y ejercicio - VivePlen">
+  <link rel="stylesheet" href="css/home.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <link rel="icon" href="assets/icons/icon-192.png" type="image/png">
+  <script src="app.js" type="module"></script>
+</head>
+<body>
+
+<header>
+  <h1>Salud & Ejercicio</h1>
+  <nav>
+    <a href="#inicio">Inicio</a>
+    <a href="#productos">Modelos</a>
+    <a href="#datos">Datos Salud</a>
+    <a href="#imc">IMC</a>
+    <a href="#ejercicios">Ejercicios</a>
+  </nav>
+  <div class="header-buttons">
+    <button id="abrirCarritoBtn" class="header-cart-btn">🛒 <span id="contadorCarrito">0</span></button>
+    <button id="cerrarSesion">Cerrar sesión</button>
+  </div>
+</header>
+
+<main>
+
+  <section id="inicio" class="hero">
+    <h2>Tu bienestar al alcance de un clic</h2>
+    <p>
+      Con nuestro dispositivo inteligente <strong>VivePlen</strong>, podrás conocer en tiempo real tus niveles de estrés,
+      ritmo cardíaco y oxigenación. Mejora tu bienestar con información precisa y personalizada que te ayuda a cuidar
+      cuerpo y mente. Vive bien, VIVEPLEN.
+    </p>
+    <button onclick="document.getElementById('productos').scrollIntoView({behavior:'smooth'})">
+      Conocer nuestros modelos
+    </button>
+  </section>
+
+  <section id="productos">
+    <h2>Modelos VivePlen</h2>
+    <p>Elige el modelo que mejor se adapta a tu estilo de vida. Todos nuestros dispositivos cuentan con sensores de última generación para medir tu bienestar.</p>
+
+    <div class="carrusel-container">
+      <button class="carrusel-btn prev">❮</button>
+      <div class="carrusel">
+        <p id="cargandoProductos" style="padding: 2rem; text-align: center; width: 100%;">Cargando modelos...</p>
+      </div>
+      <button class="carrusel-btn next">❯</button>
+    </div>
+  </section>
+
+  <section id="datos">
+    <h2>Datos de tu Salud</h2>
+    <div class="iot-data">
+      <div class="card">
+        <h3>Ritmo Cardíaco</h3>
+        <p id="heartRate">-- bpm</p>
+      </div>
+      <div class="card">
+        <h3>Oxigenación</h3>
+        <p id="oxygen">-- %</p>
+      </div>
+      <div class="card">
+        <h3>Estrés (HRV)</h3>
+        <p id="stress">--</p>
+      </div>
+    </div>
+    <p id="stressAdvice" class="advice"></p>
+  </section>
+
+  <section id="imc">
+    <h2>Calculadora de IMC</h2>
+    <div class="imc-box">
+      <label>Peso (kg): <input type="number" id="peso" placeholder="Ej: 65"></label>
+      <label>Estatura (m): <input type="number" step="0.01" id="estatura" placeholder="Ej: 1.70"></label>
+      <button id="calcIMCBtn">Calcular IMC</button>
+    </div>
+    <p id="resultadoIMC" class="resultado"></p>
+
+    <div id="tablaIMC" class="tabla-imc">
+      <h3>Clasificación del IMC</h3>
+      <div class="datos-usuario-imc">
+        <p>Tu peso registrado: <strong id="pesoRegistrado">--</strong> kg</p>
+        <p>Tu estatura registrada: <strong id="estaturaRegistrada">--</strong> m</p>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Categoría</th><th>IMC</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Bajo peso</td><td>&lt; 18.5</td></tr>
+          <tr><td>Normal</td><td>18.5 - 24.9</td></tr>
+          <tr><td>Sobrepeso</td><td>25 - 29.9</td></tr>
+          <tr><td>Obesidad</td><td>≥ 30</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="ejercicios">
+    <h2>Ejercicios Recomendados</h2>
+    <p>Selecciona tu grupo de edad y se generarán ejercicios personalizados según tu peso e IMC.</p>
+
+    <div class="edad-grid">
+      <div class="edad-card" data-edad="14-18">
+        <img src="img/edad-joven.jpg" alt="Ejercicios adolescentes">
+        <h3>14 - 18 años</h3>
+      </div>
+      <div class="edad-card" data-edad="18-25">
+        <img src="img/edad-joven-adulto.jpg" alt="Ejercicios jóvenes adultos">
+        <h3>18 - 25 años</h3>
+      </div>
+      <div class="edad-card" data-edad="26-40">
+        <img src="img/edad-adulto.jpg" alt="Ejercicios adultos">
+        <h3>26 - 40 años</h3>
+      </div>
+      <div class="edad-card" data-edad="41-60">
+        <img src="img/edad-maduro.jpg" alt="Ejercicios adultos mayores">
+        <h3>41 - 60 años</h3>
+      </div>
+      <div class="edad-card" data-edad="60+">
+        <img src="img/edad-anciano.jpg" alt="Ejercicios mayores">
+        <h3>60+ años</h3>
+      </div>
+    </div>
+
+    <div id="resultadoEjercicios" class="ejercicios-lista">
+      <h3>Ejercicios recomendados</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Ejercicio</th>
+            <th>Duración / Repeticiones</th>
+            <th>Beneficio</th>
+          </tr>
+        </thead>
+        <tbody id="tablaEjercicios"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<div id="modalCarritoOverlay" class="modal-overlay">
+  <div id="carrito" class="carrito-modal">
+    <button id="cerrarCarritoBtn" class="cerrar-modal">✖</button>
+    <h3>🛒 Tu carrito</h3>
+    <div id="listaCarritoContainer">
+      <ul id="listaCarrito"></ul>
+      <p id="carritoVacioMsg" class="carrito-vacio">Tu carrito está vacío.</p>
+    </div>
+    <div class="carrito-footer">
+      <p id="totalCarrito">Total: $0 MXN</p>
+      <button id="comprarBtn">Finalizar compra</button>
+    </div>
+  </div>
+</div>
+
+<script src="scripts/home.js" type="module"></script>
+
+</body>
+</html>

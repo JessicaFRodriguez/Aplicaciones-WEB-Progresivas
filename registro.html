@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro de usuario</title>
+  <link rel="stylesheet" href="css/registro.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2196f3">
+  <link rel="icon" href="assets/icons/icon-192.png" type="image/png">
+</head>
+<body>
+  <div class="container">
+    <div class="logo-container">
+      <img src="assets/logo.png" alt="Logo" class="logo">
+    </div>
+    <h2>Registro</h2>
+    <form id="registerForm">
+      <label for="name">Full name:</label>
+      <input type="text" id="name" placeholder="Enter your name" required>
+
+      <label for="age">Age:</label>
+      <input type="number" id="age" placeholder="e.g. 25" required>
+
+      <label for="height">Height (m):</label>
+      <input type="number" step="0.01" id="height" placeholder="e.g. 1.65" required>
+
+      <label for="weight">Weight (kg):</label>
+      <input type="number" id="weight" placeholder="e.g. 60" required>
+
+      <label for="emailreg">Email:</label>
+      <input type="email" id="emailreg" placeholder="example@email.com" required>
+
+      <label for="passwordreg">Password:</label>
+      <input type="password" id="passwordreg" placeholder="Minimum 6 characters" required>
+
+    <button type="submit" id="registro">Register</button>
+  </form>
+
+    <p>¿Ya tienes una cuenta? <a href="login.html">Inicia sesión aquí</a>.</p>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="app.js"></script>
+  <script type="module" src="scripts/registro.js"></script>
+</body>
+</html>

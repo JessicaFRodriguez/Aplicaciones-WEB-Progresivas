@@ -1,0 +1,10 @@
+# Dependencias
+node_modules/
+
+# Logs
+*.log
+
+# Variables de entorno
+firebase-credentials.json
+
+
