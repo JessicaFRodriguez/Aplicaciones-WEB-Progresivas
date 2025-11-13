@@ -1,5 +1,5 @@
 // ===============================
-// REGISTRO.JS - English fields + Firestore users
+// REGISTRO.JS - Versión Render Ready
 // ===============================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      const res = await fetch("http://localhost:3000/api/register", {
+      const res = await fetch(`${window.location.origin}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, age, height, weight, email, password }),
@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("User registered successfully.");
         window.location.href = "login.html";
       } else {
-        alert("Error: " + data.error);
+        alert("Error: " + (data.error || "Unexpected error"));
       }
     } catch (err) {
       alert("Connection error: " + err.message);

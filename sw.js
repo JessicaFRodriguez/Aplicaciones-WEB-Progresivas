@@ -2,38 +2,38 @@
 // SERVICE WORKER - VivePlen PWA
 // ===============================
 
-const CACHE_NAME = "viveplen-v4"; // Aumenta versión al hacer cambios
+const CACHE_NAME = "viveplen-v5"; // Aumenta versión al hacer cambios
 const DYNAMIC_CACHE = "viveplen-dynamic-v3";
 
 const URLS_TO_CACHE = [
-  "/", // raíz
-  "/home.html",
-  "/login.html",
-  "/registro.html",
-  "/admin.html",
-  "/css/home.css",
-  "/css/login.css",
-  "/css/registro.css",
-  "/css/admin.css",
-  "/scripts/home.js",
-  "/scripts/login.js",
-  "/scripts/registro.js",
-  "/scripts/admin.js",
-  "/assets/logo.png",
-  "/assets/icons/icon-192.png",
-  "/assets/icons/icon-512.png",
-  "/img/edad-adulto.jpg",
-  "/img/edad-anciano.jpg",
-  "/img/edad-joven-adulto.jpg",
-  "/img/edad-joven.jpg",
-  "/img/edad-maduro.jpg",
-  "/img/modelo-basico.png",
-  "/img/modelo-elite.png",
-  "/img/modelo-max.png",
-  "/img/modelo-plus.png",
-  "/img/modelo-pro.png",
-  "/img/modelo-ultra.png",
-  "/manifest.json"
+  "./",
+  "./home.html",
+  "./login.html",
+  "./registro.html",
+  "./admin.html",
+  "./css/home.css",
+  "./css/login.css",
+  "./css/registro.css",
+  "./css/admin.css",
+  "./scripts/home.js",
+  "./scripts/login.js",
+  "./scripts/registro.js",
+  "./scripts/admin.js",
+  "./assets/logo.png",
+  "./assets/icons/icon-192.png",
+  "./assets/icons/icon-512.png",
+  "./img/edad-adulto.jpg",
+  "./img/edad-anciano.jpg",
+  "./img/edad-joven-adulto.jpg",
+  "./img/edad-joven.jpg",
+  "./img/edad-maduro.jpg",
+  "./img/modelo-basico.png",
+  "./img/modelo-elite.png",
+  "./img/modelo-max.png",
+  "./img/modelo-plus.png",
+  "./img/modelo-pro.png",
+  "./img/modelo-ultra.png",
+  "./manifest.json"
 ];
 
 // --- INSTALACIÓN ---
@@ -66,13 +66,18 @@ self.addEventListener("activate", e => {
 self.addEventListener("fetch", e => {
   const requestUrl = new URL(e.request.url);
 
-  // No interceptar llamadas al backend
-  if (requestUrl.origin.includes("localhost:3000")) return;
+  // Evitar cachear llamadas a la API (Render o localhost)
+  if (
+    requestUrl.pathname.startsWith("/api/") ||
+    requestUrl.origin.includes("onrender.com") && requestUrl.pathname.startsWith("/api/") ||
+    requestUrl.origin.includes("localhost:3000")
+  ) {
+    return; // no intercepta peticiones al backend
+  }
 
   e.respondWith(
     fetch(e.request)
       .then(response => {
-        // Guardar en cache dinámico
         const clone = response.clone();
         caches.open(DYNAMIC_CACHE).then(cache => cache.put(e.request, clone));
         return response;

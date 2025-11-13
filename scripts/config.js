@@ -17,8 +17,3 @@ window.handleError = (error, msg = "Error de conexión con el servidor") => {
   alert(msg);
 };
 
-// ===== EJEMPLO DE USO =====
-// fetch(api("/api/session"))
-//   .then(r => r.json())
-//   .then(console.log)
-//   .catch(err => handleError(err));

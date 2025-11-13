@@ -1,52 +1,47 @@
 // ===============================
-// LOGIN.JS - English fields + Firestore users
+// REGISTRO.JS - English fields + Firestore users
 // ===============================
 
-document.getElementById('login').addEventListener('click', async () => {
-  const email = document.getElementById('emaillog').value;
-  const password = document.getElementById('passwordlog').value;
+document.addEventListener("DOMContentLoaded", () => {
+  const registerBtn = document.getElementById("registro");
+  const form = document.getElementById("registerForm");
 
-  if (!email || !password) {
-    return alert('Please enter your email and password.');
+  if (!registerBtn || !form) {
+    console.error("No se encontró el formulario o el botón de registro");
+    return;
   }
 
-  try {
-    const res = await fetch('http://localhost:3000/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
+  registerBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
 
-    const data = await res.json();
+    const name = document.getElementById("name").value.trim();
+    const age = document.getElementById("age").value.trim();
+    const height = document.getElementById("height").value.trim();
+    const weight = document.getElementById("weight").value.trim();
+    const email = document.getElementById("emailreg").value.trim();
+    const password = document.getElementById("passwordreg").value.trim();
 
-    if (data.success) {
-      // Guardar UID en localStorage
-      localStorage.setItem('userId', data.uid);
+    if (!name || !age || !height || !weight || !email || !password) {
+      alert("Please fill in all fields.");
+      return;
+    }
 
-      // Redirección según rol
-      if (data.role === 'admin') {
-        window.location.href = 'admin.html';
+    try {
+      const res = await fetch("http://localhost:3000/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, age, height, weight, email, password }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("User registered successfully.");
+        window.location.href = "login.html";
       } else {
-        window.location.href = 'home.html';
+        alert("Error: " + data.error);
       }
-    } else {
-      alert('Login error: ' + data.error);
+    } catch (err) {
+      alert("Connection error: " + err.message);
     }
-  } catch (err) {
-    alert('Connection error: ' + err.message);
-  }
-});
-
-// Logout
-document.getElementById('cerrar').addEventListener('click', async () => {
-  try {
-    const res = await fetch('http://localhost:3000/api/logout', { method: 'POST' });
-    const data = await res.json();
-    if (data.success) {
-      alert('Session closed');
-      localStorage.removeItem('userId');
-    }
-  } catch (err) {
-    alert('Error closing session: ' + err.message);
-  }
+  });
 });

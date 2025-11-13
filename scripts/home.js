@@ -1,3 +1,7 @@
+// ===============================
+// HOME.JS - VivePlen App Completo
+// ===============================
+
 // === ELEMENTOS DEL DOM ===
 const pesoInput = document.getElementById('peso');
 const estaturaInput = document.getElementById('estatura');
@@ -11,24 +15,21 @@ const oxygen = document.getElementById('oxygen');
 const stress = document.getElementById('stress');
 const stressAdvice = document.getElementById('stressAdvice');
 
-// --- CARRITO ---
 const listaCarrito = document.getElementById('listaCarrito');
 const totalCarrito = document.getElementById('totalCarrito');
 const comprarBtn = document.getElementById('comprarBtn');
 const cerrarSesionBtn = document.getElementById('cerrarSesion');
-
-// --- MODAL ---
 const abrirCarritoBtn = document.getElementById('abrirCarritoBtn');
 const cerrarCarritoBtn = document.getElementById('cerrarCarritoBtn');
 const modalCarritoOverlay = document.getElementById('modalCarritoOverlay');
 const contadorCarrito = document.getElementById('contadorCarrito');
 const carritoVacioMsg = document.getElementById('carritoVacioMsg');
 
-// --- PRODUCTOS ---
 const carrusel = document.querySelector('.carrusel');
+const carruselContainer = document.querySelector('.carrusel-container');
+const prevBtn = document.querySelector('.carrusel-btn.prev');
+const nextBtn = document.querySelector('.carrusel-btn.next');
 const cargandoProductos = document.getElementById('cargandoProductos');
-
-// --- NUEVOS ELEMENTOS DE IMC ---
 const pesoRegistrado = document.getElementById('pesoRegistrado');
 const estaturaRegistrada = document.getElementById('estaturaRegistrada');
 
@@ -38,19 +39,23 @@ let userId = null;
 let carrito = [];
 let productosDisponibles = [];
 
+const API_BASE = window.location.origin; // <- FUNCIONA EN RENDER
+
 // === SESIÓN DE USUARIO ===
 async function validarSesion() {
-  const res = await fetch('/api/session', {
-    headers: { 'x-uid': localStorage.getItem('userId') }
-  });
-  const data = await res.json();
+  try {
+    const res = await fetch(`${API_BASE}/api/session`, {
+      headers: { 'x-uid': localStorage.getItem('userId') }
+    });
+    const data = await res.json();
 
-  if (!data.loggedIn) {
-    localStorage.removeItem('userId');
-    window.location.href = 'login.html';
-  } else {
+    if (!data.loggedIn) {
+      localStorage.removeItem('userId');
+      window.location.href = 'login.html';
+      return;
+    }
+
     userId = data.uid;
-
     if (data.weight) {
       pesoInput.value = data.weight;
       pesoRegistrado.textContent = data.weight;
@@ -59,49 +64,47 @@ async function validarSesion() {
       estaturaInput.value = data.height;
       estaturaRegistrada.textContent = data.height;
     }
-
     if (data.bmi) {
       imcGlobal = data.bmi;
-      if (data.categoriaIMC) {
-        categoriaIMC = data.categoriaIMC;
+      categoriaIMC = data.categoriaIMC || "";
+      if (categoriaIMC) {
         resultadoIMC.innerHTML = `Tu IMC es <strong>${imcGlobal}</strong> (${categoriaIMC.toUpperCase()})`;
         mostrarEjercicios();
-      } else {
-        resultadoIMC.innerHTML = `Tu IMC registrado es <strong>${imcGlobal}</strong>.`;
       }
     }
-
-    if (data.carrito) {
-      carrito = data.carrito;
-      actualizarCarrito();
-    }
-
+    carrito = data.carrito || [];
+    actualizarCarrito();
     await cargarProductos();
+  } catch (err) {
+    console.error("Error al validar sesión:", err);
+    alert("Error de conexión. Revisa tu servidor.");
   }
 }
 
 // === CERRAR SESIÓN ===
 cerrarSesionBtn.addEventListener('click', async () => {
-  await fetch('/api/logout', { method: 'POST' });
+  await fetch(`${API_BASE}/api/logout`, { method: 'POST' });
   localStorage.removeItem('userId');
   alert('Sesión cerrada.');
   window.location.href = 'login.html';
 });
 
-// === DATOS IoT ===
+// === SENSOR SIMULADO IoT ===
 function generarDatosIOT() {
   const bpm = Math.floor(Math.random() * (100 - 60 + 1)) + 60;
   const ox = Math.floor(Math.random() * (100 - 92 + 1)) + 92;
   const hrv = Math.floor(Math.random() * 100);
+
   heartRate.textContent = `${bpm} bpm`;
   oxygen.textContent = `${ox}%`;
   stress.textContent = hrv < 40 ? "Alto" : hrv < 70 ? "Medio" : "Bajo";
-  if (hrv < 40) stressAdvice.textContent = "Tu nivel de estrés es alto. Respira profundo y toma un descanso.";
-  else if (hrv < 70) stressAdvice.textContent = "Tu nivel de estrés es moderado. Mantén tu equilibrio.";
-  else stressAdvice.textContent = "Excelente, estás relajado.";
+
+  if (hrv < 40) stressAdvice.textContent = "Tu nivel de estrés es alto. Respira profundo y relájate.";
+  else if (hrv < 70) stressAdvice.textContent = "Estrés moderado. Mantén tus hábitos saludables.";
+  else stressAdvice.textContent = "Excelente, estás tranquilo.";
 }
 
-// === IMC ===
+// === CALCULAR IMC ===
 async function calcularIMCFirebase(peso, estatura) {
   if (!peso || !estatura || estatura <= 0) return;
   const imc = peso / (estatura * estatura);
@@ -112,22 +115,22 @@ async function calcularIMCFirebase(peso, estatura) {
   else if (imc < 30) categoriaIMC = "sobrepeso";
   else categoriaIMC = "obesidad";
 
-  const recomendacion = {
-    bajo_peso: "Aumenta calorías con alimentos saludables y haz ejercicios de fuerza moderados.",
-    normal: "Mantén tu equilibrio con ejercicios variados y buena alimentación.",
-    sobrepeso: "Haz ejercicios de bajo impacto y combina con dieta controlada.",
-    obesidad: "Empieza con rutinas suaves y busca acompañamiento profesional."
-  }[categoriaIMC];
+  const recomendaciones = {
+    bajo_peso: "Aumenta calorías y haz ejercicios de fuerza.",
+    normal: "Mantén una dieta equilibrada y ejercicio constante.",
+    sobrepeso: "Realiza caminatas diarias y controla tu alimentación.",
+    obesidad: "Empieza con ejercicios suaves y consulta un profesional."
+  };
 
   resultadoIMC.innerHTML = `
-    Tu IMC es <strong>${imcGlobal}</strong> (${categoriaIMC.replace("_", " ").toUpperCase()})<br>${recomendacion}
+    Tu IMC es <strong>${imcGlobal}</strong> (${categoriaIMC.toUpperCase()})<br>${recomendaciones[categoriaIMC]}
   `;
 
   pesoRegistrado.textContent = peso;
   estaturaRegistrada.textContent = estatura;
 
   if (userId) {
-    await fetch('/api/update-bmi', {
+    await fetch(`${API_BASE}/api/update-bmi`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ uid: userId, bmi: imcGlobal, bmiCategory: categoriaIMC, weight: peso, height: estatura })
@@ -138,31 +141,21 @@ async function calcularIMCFirebase(peso, estatura) {
 }
 
 // === EJERCICIOS ===
-function aleatorio(array, cantidad = 3) {
-  const copia = [...array];
-  const seleccion = [];
-  for (let i = 0; i < cantidad && copia.length; i++) {
-    const index = Math.floor(Math.random() * copia.length);
-    seleccion.push(copia.splice(index, 1)[0]);
-  }
-  return seleccion;
-}
-
 const ejerciciosPorIMC = {
   bajo_peso: [
-    { nombre: "Peso corporal - sentadillas", duracion: "3x15", beneficio: "Aumenta masa muscular" },
-    { nombre: "Flexiones suaves", duracion: "3x10", beneficio: "Tonifica y fortalece" },
-    { nombre: "Zancadas", duracion: "3x12", beneficio: "Fuerza en piernas y glúteos" }
+    { nombre: "Sentadillas", duracion: "3x15", beneficio: "Gana masa muscular" },
+    { nombre: "Flexiones suaves", duracion: "3x10", beneficio: "Fortalece pecho y brazos" },
+    { nombre: "Zancadas", duracion: "3x12", beneficio: "Activa glúteos y piernas" }
   ],
   normal: [
-    { nombre: "Trote ligero", duracion: "20 min", beneficio: "Salud cardiovascular" },
-    { nombre: "Yoga", duracion: "25 min", beneficio: "Flexibilidad y control" },
-    { nombre: "Ciclismo", duracion: "20 min", beneficio: "Cardio y piernas fuertes" }
+    { nombre: "Trote ligero", duracion: "20 min", beneficio: "Cardio estable" },
+    { nombre: "Yoga", duracion: "25 min", beneficio: "Equilibrio mental y físico" },
+    { nombre: "Ciclismo", duracion: "20 min", beneficio: "Fortalece piernas" }
   ],
   sobrepeso: [
-    { nombre: "Caminata rápida", duracion: "30 min", beneficio: "Cardio bajo impacto" },
-    { nombre: "Natación", duracion: "20 min", beneficio: "Sin estrés articular" },
-    { nombre: "Tai Chi", duracion: "20 min", beneficio: "Relaja y mejora equilibrio" }
+    { nombre: "Caminata rápida", duracion: "30 min", beneficio: "Activa metabolismo" },
+    { nombre: "Natación", duracion: "20 min", beneficio: "Sin impacto articular" },
+    { nombre: "Tai Chi", duracion: "20 min", beneficio: "Relajación activa" }
   ],
   obesidad: [
     { nombre: "Caminata suave", duracion: "25 min", beneficio: "Mejora circulación" },
@@ -176,26 +169,23 @@ function mostrarEjercicios() {
     tablaEjercicios.innerHTML = `<tr><td colspan="3">Calcula primero tu IMC.</td></tr>`;
     return;
   }
-  const ejercicios = ejerciciosPorIMC[categoriaIMC];
-  const seleccionados = aleatorio(ejercicios, 3);
-  tablaEjercicios.innerHTML = '';
-  seleccionados.forEach(ej => {
-    const fila = document.createElement('tr');
-    fila.innerHTML = `<td>${ej.nombre}</td><td>${ej.duracion}</td><td>${ej.beneficio}</td>`;
-    tablaEjercicios.appendChild(fila);
-  });
+
+  const ejercicios = ejerciciosPorIMC[categoriaIMC] || [];
+  tablaEjercicios.innerHTML = ejercicios.map(ej =>
+    `<tr><td>${ej.nombre}</td><td>${ej.duracion}</td><td>${ej.beneficio}</td></tr>`
+  ).join('');
 }
 
 // === PRODUCTOS ===
 async function cargarProductos() {
   try {
-    const res = await fetch('/api/products');
-    if (!res.ok) throw new Error(`Error ${res.status}: No se pudo conectar a /api/products`);
+    const res = await fetch(`${API_BASE}/api/products`);
+    if (!res.ok) throw new Error("No se pudieron cargar los productos");
     productosDisponibles = await res.json();
 
     carrusel.innerHTML = '';
     if (productosDisponibles.length === 0) {
-      carrusel.innerHTML = '<p>No hay productos disponibles en este momento.</p>';
+      carrusel.innerHTML = '<p>No hay productos disponibles.</p>';
       return;
     }
 
@@ -203,96 +193,78 @@ async function cargarProductos() {
       const agotado = prod.stock <= 0;
       const tarjeta = document.createElement('div');
       tarjeta.className = `producto-card ${agotado ? 'agotado' : ''}`;
-      const botonTitle = agotado ? 'Producto Agotado' : 'Agregar al carrito';
-
       tarjeta.innerHTML = `
         <img src="${prod.img}" alt="${prod.nombre}">
         <h3>${prod.nombre}</h3>
         <p>${prod.descripcion}</p>
         <div class="producto-footer">
           <span class="precio">$${prod.precio} MXN</span>
-          <button 
-            class="agregar-carrito" 
-            data-id="${prod.id}" 
-            data-nombre="${prod.nombre}" 
-            data-precio="${prod.precio}" 
-            data-stock="${prod.stock}" 
-            ${agotado ? 'disabled' : ''}
-            title="${botonTitle}"
-          >🛒</button>
-        </div>
-      `;
+          <button class="agregar-carrito" data-id="${prod.id}" ${agotado ? 'disabled' : ''}>
+            ${agotado ? 'Agotado' : '🛒'}
+          </button>
+        </div>`;
       carrusel.appendChild(tarjeta);
     });
 
-    calcularMedidasCarrusel();
+    calcularCarrusel();
     asignarEventosCarrito();
   } catch (error) {
     console.error('Error al cargar productos:', error);
-    cargandoProductos.textContent = 'Error al cargar productos.';
   }
 }
 
 // === CARRITO ===
-async function guardarCarritoEnDB() {
-  if (!userId) return;
-  try {
-    await fetch('/api/update-cart', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uid: userId, carrito })
-    });
-  } catch (error) {
-    console.error('Error al guardar el carrito:', error);
-  }
-}
-
 function actualizarCarrito() {
   listaCarrito.innerHTML = '';
-  let suma = 0;
+  let total = 0;
 
   if (carrito.length === 0) carritoVacioMsg.classList.add('visible');
   else carritoVacioMsg.classList.remove('visible');
 
-  carrito.forEach((item, index) => {
+  carrito.forEach((item, i) => {
     const li = document.createElement('li');
     li.innerHTML = `
       <div class="item-info">
-        <span class="item-nombre">${item.nombre}</span>
-        <span class="item-precio">$${item.precio} MXN</span>
+        <span>${item.nombre}</span>
+        <span>$${item.precio}</span>
       </div>
-      <button data-index="${index}" class="eliminar">🗑️</button>
-    `;
+      <button class="eliminar" data-index="${i}">🗑️</button>`;
     listaCarrito.appendChild(li);
-    suma += item.precio;
+    total += item.precio;
   });
 
-  totalCarrito.textContent = `Total: $${suma} MXN`;
+  totalCarrito.textContent = `Total: $${total} MXN`;
   contadorCarrito.textContent = carrito.length;
 
-  document.querySelectorAll('.eliminar').forEach(btn => {
+  document.querySelectorAll('.eliminar').forEach(btn =>
     btn.addEventListener('click', () => {
-      carrito.splice(parseInt(btn.dataset.index), 1);
+      carrito.splice(btn.dataset.index, 1);
       actualizarCarrito();
-    });
-  });
+    })
+  );
 
   guardarCarritoEnDB();
+}
+
+async function guardarCarritoEnDB() {
+  if (!userId) return;
+  try {
+    await fetch(`${API_BASE}/api/update-cart`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: userId, carrito })
+    });
+  } catch (err) {
+    console.error("Error al guardar carrito:", err);
+  }
 }
 
 function asignarEventosCarrito() {
   document.querySelectorAll('.agregar-carrito').forEach(btn => {
     btn.addEventListener('click', () => {
-      if (btn.disabled) return;
-      const nombre = btn.dataset.nombre;
-      const precio = parseFloat(btn.dataset.precio);
-      const stock = parseInt(btn.dataset.stock);
-      const enCarrito = carrito.filter(i => i.nombre === nombre).length;
-      if (enCarrito >= stock) {
-        alert('¡Lo sentimos! Ya no hay más stock disponible para este producto.');
-        return;
-      }
-      carrito.push({ nombre, precio });
+      const producto = productosDisponibles.find(p => p.id === btn.dataset.id);
+      if (!producto) return;
+      carrito.push(producto);
       actualizarCarrito();
       contadorCarrito.style.transform = 'scale(1.3)';
       setTimeout(() => contadorCarrito.style.transform = 'scale(1)', 200);
@@ -300,58 +272,51 @@ function asignarEventosCarrito() {
   });
 }
 
-comprarBtn.addEventListener('click', async () => {
+comprarBtn.addEventListener('click', () => {
   if (carrito.length === 0) return alert('Tu carrito está vacío.');
-  alert('Compra finalizada con éxito.');
+  alert('Compra realizada con éxito.');
   carrito = [];
   actualizarCarrito();
   modalCarritoOverlay.classList.remove('visible');
-  await cargarProductos();
 });
 
 // === CARRUSEL ===
-const prevBtn = document.querySelector('.carrusel-btn.prev');
-const nextBtn = document.querySelector('.carrusel-btn.next');
-const carruselContainer = document.querySelector('.carrusel-container');
-
 let cardWidth = 0;
-let autoSlideInterval;
+let autoSlide;
 
-function calcularMedidasCarrusel() {
-  const firstCard = carrusel.querySelector('.producto-card');
-  if (firstCard) cardWidth = firstCard.offsetWidth + 20;
+function calcularCarrusel() {
+  const card = carrusel.querySelector('.producto-card');
+  if (card) cardWidth = card.offsetWidth + 20;
 }
 
 function moverCarrusel(dir) {
-  const maxScrollLeft = carrusel.scrollWidth - carrusel.clientWidth;
-  if (dir === "next") {
-    carrusel.scrollLeft = carrusel.scrollLeft >= maxScrollLeft - 10 ? 0 : carrusel.scrollLeft + cardWidth;
+  const maxScroll = carrusel.scrollWidth - carrusel.clientWidth;
+  if (dir === 'next') {
+    carrusel.scrollLeft = carrusel.scrollLeft >= maxScroll - 10 ? 0 : carrusel.scrollLeft + cardWidth;
   } else {
-    carrusel.scrollLeft = carrusel.scrollLeft <= 10 ? maxScrollLeft : carrusel.scrollLeft - cardWidth;
+    carrusel.scrollLeft = carrusel.scrollLeft <= 10 ? maxScroll : carrusel.scrollLeft - cardWidth;
   }
 }
 
-nextBtn.addEventListener('click', () => moverCarrusel("next"));
-prevBtn.addEventListener('click', () => moverCarrusel("prev"));
+nextBtn.addEventListener('click', () => moverCarrusel('next'));
+prevBtn.addEventListener('click', () => moverCarrusel('prev'));
 
 function iniciarAutoSlide() {
-  detenerAutoSlide();
-  autoSlideInterval = setInterval(() => moverCarrusel("next"), 5000);
+  clearInterval(autoSlide);
+  autoSlide = setInterval(() => moverCarrusel('next'), 5000);
 }
 
-function detenerAutoSlide() {
-  if (autoSlideInterval) clearInterval(autoSlideInterval);
-}
-
-carruselContainer.addEventListener('mouseenter', detenerAutoSlide);
+carruselContainer.addEventListener('mouseenter', () => clearInterval(autoSlide));
 carruselContainer.addEventListener('mouseleave', iniciarAutoSlide);
-window.addEventListener('resize', calcularMedidasCarrusel);
-iniciarAutoSlide();
+
+// === MODAL ===
+abrirCarritoBtn.addEventListener('click', () => modalCarritoOverlay.classList.add('visible'));
+cerrarCarritoBtn.addEventListener('click', () => modalCarritoOverlay.classList.remove('visible'));
+modalCarritoOverlay.addEventListener('click', e => {
+  if (e.target === modalCarritoOverlay) modalCarritoOverlay.classList.remove('visible');
+});
 
 // === EVENTOS ===
-setInterval(generarDatosIOT, 5000);
-generarDatosIOT();
-
 calcBtn.addEventListener('click', () => {
   const peso = parseFloat(pesoInput.value);
   const estatura = parseFloat(estaturaInput.value);
@@ -359,13 +324,9 @@ calcBtn.addEventListener('click', () => {
 });
 
 edadCards.forEach(card => card.addEventListener('click', mostrarEjercicios));
-
-// --- MODAL ---
-abrirCarritoBtn.addEventListener('click', () => modalCarritoOverlay.classList.add('visible'));
-cerrarCarritoBtn.addEventListener('click', () => modalCarritoOverlay.classList.remove('visible'));
-modalCarritoOverlay.addEventListener('click', e => {
-  if (e.target === modalCarritoOverlay) modalCarritoOverlay.classList.remove('visible');
-});
+setInterval(generarDatosIOT, 5000);
+generarDatosIOT();
 
 // === INICIO ===
 validarSesion();
+iniciarAutoSlide();
