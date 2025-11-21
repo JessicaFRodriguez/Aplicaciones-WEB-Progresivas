@@ -115,7 +115,6 @@ async function obtenerDatosRealesIOT() {
 
     const data = await res.json();
 
-    // Si la respuesta dice que está vacío o son ceros
     if (data.empty || (data.heartRate === 0 && data.oxygen === 0)) {
        heartRateEl.textContent = "-- bpm";
        oxygenEl.textContent = "-- %";
@@ -125,15 +124,13 @@ async function obtenerDatosRealesIOT() {
        return; 
     }
 
-    // Datos válidos
     heartRateEl.textContent = `${data.heartRate} bpm`;
     oxygenEl.textContent = `${data.oxygen}%`;
-
     const hrv = data.stress; 
     stressEl.textContent = hrv > 70 ? "Alto" : hrv > 40 ? "Medio" : "Bajo";
 
     if (data.oxygen < 90) {
-        stressAdvice.textContent = "⚠️ Oxigenación baja. Respira profundo.";
+        stressAdvice.textContent = "⚠️ Oxigenación baja.";
         stressAdvice.style.color = "red";
     } else if (hrv > 70) {
         stressAdvice.textContent = "Estrés alto. Relájate.";
@@ -153,7 +150,7 @@ function iniciarLecturaIoT() {
 }
 
 // ===============================
-// 5. FUNCIONES DE PRODUCTOS Y CARRITO (CORREGIDAS)
+// 5. FUNCIONES DE PRODUCTOS Y CARRITO
 // ===============================
 
 async function cargarProductos() {
@@ -173,7 +170,6 @@ async function cargarProductos() {
       const tarjeta = document.createElement('div');
       tarjeta.className = `producto-card ${agotado ? 'agotado' : ''}`;
       
-      // AQUÍ AGREGUÉ TODOS LOS DATA-ATTRIBUTES NECESARIOS
       tarjeta.innerHTML = `
         <img src="${prod.img}" alt="${prod.nombre}">
         <h3>${prod.nombre}</h3>
@@ -193,15 +189,14 @@ async function cargarProductos() {
     });
     
     calcularCarrusel();
-    asignarEventosCarrito(); // Llamada a la nueva función de eventos
-    actualizarCarrito();     // Para checar si alguno debe empezar bloqueado
+    asignarEventosCarrito();
+    actualizarCarrito(); // Verifica bloqueos iniciales
 
   } catch (error) { console.error(error); }
 }
 
 function asignarEventosCarrito() {
   document.querySelectorAll('.agregar-carrito').forEach(btn => {
-    // Clonamos para eliminar eventos viejos si se recarga
     const nuevoBtn = btn.cloneNode(true);
     btn.parentNode.replaceChild(nuevoBtn, btn);
 
@@ -211,7 +206,7 @@ function asignarEventosCarrito() {
        const precio = parseFloat(nuevoBtn.dataset.precio);
        const stock = parseInt(nuevoBtn.dataset.stock);
 
-       // Validar Stock
+       // Validar Stock Localmente
        const cantidadEnCarrito = carrito.filter(i => i.id === id).length;
        
        if (cantidadEnCarrito >= stock) {
@@ -219,11 +214,9 @@ function asignarEventosCarrito() {
           return;
        }
 
-       // Agregar al carrito
        carrito.push({ id, nombre, precio });
        actualizarCarrito();
 
-       // Animación
        contadorCarrito.style.transform = 'scale(1.3)';
        setTimeout(() => contadorCarrito.style.transform = 'scale(1)', 200);
     });
@@ -231,7 +224,6 @@ function asignarEventosCarrito() {
 }
 
 function actualizarCarrito() {
-  // 1. Renderizar lista
   listaCarrito.innerHTML = '';
   let total = 0;
   if(carrito.length===0) carritoVacioMsg.classList.add('visible'); else carritoVacioMsg.classList.remove('visible');
@@ -246,16 +238,14 @@ function actualizarCarrito() {
   totalCarrito.textContent = `Total: $${total} MXN`;
   contadorCarrito.textContent = carrito.length;
   
-  // Eventos eliminar
   document.querySelectorAll('.eliminar').forEach(b => b.addEventListener('click', ()=> {
       carrito.splice(b.dataset.i, 1); 
       actualizarCarrito();
   }));
   
-  // Guardar en BD
   if(userId) fetch(`${API_BASE}/api/update-cart`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({uid:userId, carrito})});
 
-  // 2. BLOQUEO VISUAL DE BOTONES (STOCK)
+  // BLOQUEO VISUAL DE BOTONES (STOCK)
   const botones = document.querySelectorAll('.agregar-carrito');
   botones.forEach(btn => {
       const id = btn.dataset.id;
@@ -277,7 +267,46 @@ function actualizarCarrito() {
 }
 
 // ===============================
-// 6. RESTO DE FUNCIONES (IMC, EJERCICIOS, CARRUSEL)
+// 6. EVENTO COMPRAR (CORREGIDO PARA STOCK GLOBAL)
+// ===============================
+comprarBtn.addEventListener('click', async () => {
+  if (carrito.length === 0) return alert('Tu carrito está vacío.');
+
+  comprarBtn.disabled = true;
+  comprarBtn.textContent = "Procesando...";
+
+  try {
+    // 1. Enviamos la petición al servidor para descontar stock real
+    const res = await fetch(`${API_BASE}/api/checkout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: userId, carrito })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert('¡Compra exitosa! El stock se ha actualizado.');
+      carrito = [];
+      modalCarritoOverlay.classList.remove('visible');
+      actualizarCarrito();
+      
+      // 2. ¡IMPORTANTE! Recargamos productos para ver el nuevo stock
+      await cargarProductos();
+    } else {
+      alert('Error: ' + data.error);
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Error al conectar con el servidor.');
+  } finally {
+    comprarBtn.disabled = false;
+    comprarBtn.textContent = "Finalizar compra";
+  }
+});
+
+// ===============================
+// 7. RESTO DE FUNCIONES
 // ===============================
 
 cerrarSesionBtn.addEventListener('click', async () => {
@@ -345,7 +374,6 @@ calcBtn.addEventListener('click', () => calcularIMCFirebase(parseFloat(pesoInput
 edadCards.forEach(c => c.addEventListener('click', mostrarEjercicios));
 abrirCarritoBtn.addEventListener('click', ()=>modalCarritoOverlay.classList.add('visible'));
 cerrarCarritoBtn.addEventListener('click', ()=>modalCarritoOverlay.classList.remove('visible'));
-comprarBtn.addEventListener('click', ()=> { if(carrito.length>0){alert('Compra lista'); carrito=[]; actualizarCarrito(); modalCarritoOverlay.classList.remove('visible');} });
 
 // === ARRANQUE ===
 validarSesion();

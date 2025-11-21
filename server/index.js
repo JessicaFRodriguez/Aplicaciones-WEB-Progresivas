@@ -37,7 +37,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // --- MIDDLEWARE ---
-app.use(cors({ origin: "*", credentials: true })); // Permisivo para evitar bloqueos
+app.use(cors({ origin: "*", credentials: true })); // Permisivo
 app.use(express.json());
 
 // ===============================
@@ -106,27 +106,23 @@ app.get("/api/session", async (req, res) => {
   } catch (err) { res.json({ loggedIn: false }); }
 });
 
-// --- NUEVA RUTA: DATOS IOT REAALES ---
+// --- DATOS IOT REALES ---
 app.get("/api/iot-data", async (req, res) => {
   const uid = req.headers["x-uid"];
   if (!uid) return res.status(400).json({ error: "UID required" });
 
   try {
-    // Busca en la subcolección iotData del usuario
     const snapshot = await db.collection("users").doc(uid)
       .collection("iotData")
       .orderBy("timestamp", "desc")
       .limit(1)
       .get();
 
-    if (snapshot.empty) {
-      // Si no hay datos, enviamos bandera vacía
-      return res.json({ empty: true });
-    }
+    if (snapshot.empty) return res.json({ empty: true });
 
     const doc = snapshot.docs[0].data();
-    // Calcular estrés si no viene del sensor
     let stress = doc.stress;
+    // Cálculo de seguridad si el sensor no envía estrés
     if (stress == null) stress = (doc.heartRate > 95) ? 80 : 20;
 
     res.json({
@@ -141,10 +137,13 @@ app.get("/api/iot-data", async (req, res) => {
   }
 });
 
-// --- PRODUCTOS (Bilingüe: Inglés o Español) ---
+// --- PRODUCTOS (Bilingüe) ---
 app.get("/api/products", async (req, res) => {
   try {
-    const snapshot = await db.collection("products").get(); // Si en Firebase se llama "productos", cambia esto.
+    // Intenta buscar "products", si falla revisa si tienes "productos"
+    let snapshot = await db.collection("products").get();
+    
+    // Mapeo seguro de datos (Inglés o Español)
     const products = snapshot.docs.map((doc) => {
       const d = doc.data();
       return {
@@ -165,8 +164,8 @@ app.get("/api/products", async (req, res) => {
 // --- RUTA EMERGENCIA: RESTAURAR PRODUCTOS ---
 app.get("/api/seed-products", async (req, res) => {
   const base = [
-    { name: "SmartBand V1", description: "Monitor cardiaco", price: 599, stock: 50, imageUrl: "https://m.media-amazon.com/images/I/61s-W0B-NGL._AC_SL1500_.jpg" },
-    { name: "VivePlen Pro", description: "Oxímetro avanzado", price: 1299, stock: 20, imageUrl: "https://m.media-amazon.com/images/I/61s-W0B-NGL._AC_SL1500_.jpg" }
+    { name: "SmartBand V1", description: "Monitor cardiaco básico", price: 599, stock: 50, imageUrl: "https://m.media-amazon.com/images/I/61s-W0B-NGL._AC_SL1500_.jpg" },
+    { name: "VivePlen Pro", description: "Oxímetro y estrés avanzado", price: 1299, stock: 20, imageUrl: "https://m.media-amazon.com/images/I/61s-W0B-NGL._AC_SL1500_.jpg" }
   ];
   try {
     const batch = db.batch();
@@ -176,7 +175,44 @@ app.get("/api/seed-products", async (req, res) => {
   } catch (e) { res.status(500).send(e.message); }
 });
 
-// --- ACTUALIZAR CARRITO/USUARIO/IMC ---
+// ===============================
+// === NUEVA RUTA: CHECKOUT (STOCK GLOBAL) ===
+// ===============================
+app.post("/api/checkout", async (req, res) => {
+  const { uid, carrito } = req.body;
+  if (!uid || !carrito || carrito.length === 0) {
+    return res.status(400).json({ error: "Datos inválidos" });
+  }
+
+  try {
+    await db.runTransaction(async (transaction) => {
+      // 1. Verificar y descontar stock por cada producto
+      for (const item of carrito) {
+        const ref = db.collection("products").doc(item.id);
+        const doc = await transaction.get(ref);
+
+        if (!doc.exists) throw new Error(`Producto ${item.nombre} no existe.`);
+
+        const stockActual = doc.data().stock || 0;
+        if (stockActual <= 0) throw new Error(`${item.nombre} se ha agotado.`);
+
+        // Restamos 1 al stock
+        transaction.update(ref, { stock: stockActual - 1 });
+      }
+      
+      // 2. Limpiar carrito del usuario
+      const userRef = db.collection("users").doc(uid);
+      transaction.update(userRef, { cart: [] });
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error en checkout:", error);
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// --- ACTUALIZACIONES USUARIO ---
 app.post("/api/update-cart", async (req, res) => {
   const { uid, carrito } = req.body;
   if (uid) await db.collection("users").doc(uid).update({ cart: carrito });
@@ -189,6 +225,7 @@ app.post("/api/update-bmi", async (req, res) => {
   res.json({ success: true });
 });
 
+// --- CRUD ADMIN ---
 app.get("/api/users", async (req, res) => {
     const s = await db.collection("users").get();
     res.json(s.docs.map(d => ({ uid: d.id, ...d.data() })));
@@ -202,9 +239,9 @@ app.put("/api/users/:id", async (req, res) => {
     res.json({success: true});
 });
 
-
 // ===============================
 // === SPA FALLBACK (CORREGIDO) ===
+// ===============================
 app.get(/^(?!\/api).*$/, (req, res) => {
   res.sendFile(path.join(__dirname, "../login.html"));
 });
