@@ -8,22 +8,23 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// --- CONFIGURACIÓN FIREBASE ---
+// --- CONFIGURACIÓN DE RUTAS Y ARCHIVOS ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// --- CONFIGURACIÓN FIREBASE ---
 let serviceAccount = null;
 
-// Carga de credenciales (Local o Nube)
+// 1. Cargar credenciales (Local o Render)
 const credentialsPath = path.join(__dirname, "firebase-credentials.json");
 if (fs.existsSync(credentialsPath)) {
   serviceAccount = JSON.parse(fs.readFileSync(credentialsPath, "utf8"));
-  console.log("✅ Credenciales locales cargadas.");
+  console.log("✅ (Local) Credenciales cargadas.");
 } else if (process.env.FIREBASE_CONFIG) {
   serviceAccount = JSON.parse(process.env.FIREBASE_CONFIG);
-  console.log("✅ Credenciales de entorno cargadas.");
+  console.log("✅ (Render) Credenciales cargadas.");
 } else {
-  console.error("❌ ERROR: No se encontraron credenciales.");
+  console.error("❌ ERROR: No hay credenciales de Firebase.");
   process.exit(1);
 }
 
@@ -42,17 +43,19 @@ app.use(express.json());
 
 // ===============================
 // === SERVIR FRONTEND ===
+// ===============================
 app.use(express.static(path.join(__dirname, "../")));
 
-// Ruta raíz -> login.html
+// Ruta raíz: Manda al login por defecto
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../login.html"));
 });
 
 // ===============================
 // === RUTAS API ===
+// ===============================
 
-// --- REGISTER ---
+// --- REGISTRO ---
 app.post("/api/register", async (req, res) => {
   const { name, age, height, weight, email, password } = req.body;
   if (!email || !password || !name) return res.status(400).json({ error: "Faltan datos" });
@@ -77,12 +80,12 @@ app.post("/api/login", async (req, res) => {
   try {
     const userRecord = await admin.auth().getUserByEmail(email);
     const userDoc = await db.collection("users").doc(userRecord.uid).get();
-    if (!userDoc.exists) return res.status(404).json({ error: "Usuario no encontrado en BD" });
+    if (!userDoc.exists) return res.status(404).json({ error: "Usuario no existe en BD" });
 
     const userData = userDoc.data();
     res.json({ success: true, uid: userDoc.id, role: userData.role || "user" });
   } catch (err) {
-    res.status(401).json({ error: "Login fallido" });
+    res.status(401).json({ error: "Credenciales inválidas" });
   }
 });
 
@@ -112,6 +115,7 @@ app.get("/api/iot-data", async (req, res) => {
   if (!uid) return res.status(400).json({ error: "UID required" });
 
   try {
+    // Busca en la colección iotData ordenado por fecha
     const snapshot = await db.collection("users").doc(uid)
       .collection("iotData")
       .orderBy("timestamp", "desc")
@@ -121,8 +125,8 @@ app.get("/api/iot-data", async (req, res) => {
     if (snapshot.empty) return res.json({ empty: true });
 
     const doc = snapshot.docs[0].data();
+    // Calcular estrés si el sensor no lo manda
     let stress = doc.stress;
-    // Cálculo de seguridad si el sensor no envía estrés
     if (stress == null) stress = (doc.heartRate > 95) ? 80 : 20;
 
     res.json({
@@ -137,13 +141,11 @@ app.get("/api/iot-data", async (req, res) => {
   }
 });
 
-// --- PRODUCTOS (Bilingüe) ---
+// --- PRODUCTOS ---
 app.get("/api/products", async (req, res) => {
   try {
-    // Intenta buscar "products", si falla revisa si tienes "productos"
-    let snapshot = await db.collection("products").get();
-    
-    // Mapeo seguro de datos (Inglés o Español)
+    // IMPORTANTE: Busca en "products" (inglés) como en tu foto
+    const snapshot = await db.collection("products").get();
     const products = snapshot.docs.map((doc) => {
       const d = doc.data();
       return {
@@ -163,62 +165,69 @@ app.get("/api/products", async (req, res) => {
 
 // --- RUTA EMERGENCIA: RESTAURAR PRODUCTOS ---
 app.get("/api/seed-products", async (req, res) => {
+  // Visita esta ruta si se te borran los productos
   const base = [
-    { name: "SmartBand V1", description: "Monitor cardiaco básico", price: 599, stock: 50, imageUrl: "https://m.media-amazon.com/images/I/61s-W0B-NGL._AC_SL1500_.jpg" },
-    { name: "VivePlen Pro", description: "Oxímetro y estrés avanzado", price: 1299, stock: 20, imageUrl: "https://m.media-amazon.com/images/I/61s-W0B-NGL._AC_SL1500_.jpg" }
+    { name: "SmartBand V1", description: "Monitor cardiaco", price: 599, stock: 50, imageUrl: "https://m.media-amazon.com/images/I/61s-W0B-NGL._AC_SL1500_.jpg" },
+    { name: "VivePlen Pro", description: "Oxímetro avanzado", price: 1299, stock: 20, imageUrl: "https://m.media-amazon.com/images/I/61s-W0B-NGL._AC_SL1500_.jpg" }
   ];
   try {
     const batch = db.batch();
     base.forEach(p => batch.set(db.collection("products").doc(), p));
     await batch.commit();
-    res.send("✅ Productos restaurados.");
+    res.send("✅ Productos restaurados en Firebase.");
   } catch (e) { res.status(500).send(e.message); }
 });
 
 // ===============================
-// === NUEVA RUTA: CHECKOUT (STOCK GLOBAL) ===
+// === CHECKOUT: COMPRA CON STOCK GLOBAL ===
 // ===============================
 app.post("/api/checkout", async (req, res) => {
   const { uid, carrito } = req.body;
-  if (!uid || !carrito || carrito.length === 0) {
-    return res.status(400).json({ error: "Datos inválidos" });
-  }
+  if (!uid || !carrito || carrito.length === 0) return res.status(400).json({ error: "Datos inválidos" });
 
   try {
+    // Usamos transacción para asegurar el stock
     await db.runTransaction(async (transaction) => {
-      // 1. Verificar y descontar stock por cada producto
+      // 1. Recorrer cada producto del carrito
       for (const item of carrito) {
         const ref = db.collection("products").doc(item.id);
         const doc = await transaction.get(ref);
 
-        if (!doc.exists) throw new Error(`Producto ${item.nombre} no existe.`);
+        if (!doc.exists) throw new Error(`El producto ${item.nombre} ya no existe.`);
 
-        const stockActual = doc.data().stock || 0;
-        if (stockActual <= 0) throw new Error(`${item.nombre} se ha agotado.`);
+        const stockActual = parseInt(doc.data().stock || 0);
+        
+        // Si no hay stock, cancelamos toda la compra
+        if (stockActual <= 0) {
+          throw new Error(`¡Lo sentimos! ${item.nombre} se ha agotado.`);
+        }
 
-        // Restamos 1 al stock
+        // Restamos 1 al stock global
         transaction.update(ref, { stock: stockActual - 1 });
       }
-      
-      // 2. Limpiar carrito del usuario
+
+      // 2. Si todo salió bien, vaciamos el carrito del usuario
       const userRef = db.collection("users").doc(uid);
       transaction.update(userRef, { cart: [] });
     });
 
+    console.log("✅ Compra procesada correctamente en el servidor.");
     res.json({ success: true });
+
   } catch (error) {
-    console.error("Error en checkout:", error);
+    console.error("🔥 Error en checkout:", error.message);
     res.status(400).json({ success: false, error: error.message });
   }
 });
 
-// --- ACTUALIZACIONES USUARIO ---
+// --- ACTUALIZAR CARRITO (SIN COMPRAR) ---
 app.post("/api/update-cart", async (req, res) => {
   const { uid, carrito } = req.body;
   if (uid) await db.collection("users").doc(uid).update({ cart: carrito });
   res.json({ success: true });
 });
 
+// --- ACTUALIZAR IMC ---
 app.post("/api/update-bmi", async (req, res) => {
   const { uid, ...data } = req.body;
   if (uid) await db.collection("users").doc(uid).update(data);
@@ -239,15 +248,18 @@ app.put("/api/users/:id", async (req, res) => {
     res.json({success: true});
 });
 
+
 // ===============================
-// === SPA FALLBACK (CORREGIDO) ===
+// === SPA FALLBACK (IMPORTANTE) ===
 // ===============================
+// Redirige a login.html si no encuentra la ruta
 app.get(/^(?!\/api).*$/, (req, res) => {
   res.sendFile(path.join(__dirname, "../login.html"));
 });
 
 // ===============================
 // === INICIAR SERVIDOR ===
+// ===============================
 app.listen(PORT, () => {
   console.log(`🚀 Server corriendo en: http://localhost:${PORT}`);
 });
