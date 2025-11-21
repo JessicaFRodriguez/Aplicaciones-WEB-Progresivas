@@ -1,16 +1,13 @@
 // ===============================
 // 1. SEGURIDAD: EL "PORTERO"
 // ===============================
-// Esto se ejecuta ANTES de cargar nada más
 const storedUserId = localStorage.getItem("userId");
 
 if (!storedUserId) {
-  // Si no hay ID en el navegador, adiós inmediato
   window.location.href = "login.html";
   throw new Error("Acceso denegado: No logueado.");
 }
 
-// Si hay ID, mostramos la página (que estaba oculta con display:none)
 document.body.style.display = "block";
 
 
@@ -26,11 +23,12 @@ const resultadoIMC = document.getElementById('resultadoIMC');
 const tablaEjercicios = document.getElementById('tablaEjercicios');
 const edadCards = document.querySelectorAll('.edad-card');
 
-const heartRate = document.getElementById('heartRate');
-const oxygen = document.getElementById('oxygen');
-const stress = document.getElementById('stress');
+const heartRateEl = document.getElementById('heartRate');
+const oxygenEl = document.getElementById('oxygen');
+const stressEl = document.getElementById('stress');
 const stressAdvice = document.getElementById('stressAdvice');
 
+// Carrito Elements
 const listaCarrito = document.getElementById('listaCarrito');
 const totalCarrito = document.getElementById('totalCarrito');
 const comprarBtn = document.getElementById('comprarBtn');
@@ -41,35 +39,33 @@ const modalCarritoOverlay = document.getElementById('modalCarritoOverlay');
 const contadorCarrito = document.getElementById('contadorCarrito');
 const carritoVacioMsg = document.getElementById('carritoVacioMsg');
 
+// Carrusel Elements
 const carrusel = document.querySelector('.carrusel');
 const carruselContainer = document.querySelector('.carrusel-container');
 const prevBtn = document.querySelector('.carrusel-btn.prev');
 const nextBtn = document.querySelector('.carrusel-btn.next');
 const cargandoProductos = document.getElementById('cargandoProductos');
+
+// IMC Elements
 const pesoRegistrado = document.getElementById('pesoRegistrado');
 const estaturaRegistrada = document.getElementById('estaturaRegistrada');
 
 let imcGlobal = null;
 let categoriaIMC = "";
-let userId = null; // Se llenará con validarSesion
+let userId = null; 
 let carrito = [];
 let productosDisponibles = [];
 
 const API_BASE = window.location.origin;
 
-// === SESIÓN DE USUARIO (Validación Servidor) ===
+// === SESIÓN DE USUARIO ===
 async function validarSesion() {
   try {
     const res = await fetch(`${API_BASE}/api/session`, {
       headers: { 'x-uid': localStorage.getItem('userId') }
     });
     
-    // Si el servidor responde 401/403 o error
-    if (!res.ok) {
-        localStorage.clear();
-        window.location.href = 'login.html';
-        return;
-    }
+    if (!res.ok) { throw new Error("Error de sesión"); }
 
     const data = await res.json();
 
@@ -79,8 +75,9 @@ async function validarSesion() {
       return;
     }
 
-    // Si todo está bien, cargamos datos
     userId = data.uid;
+    
+    // Cargar datos de perfil
     if (data.weight) {
       pesoInput.value = data.weight;
       pesoRegistrado.textContent = data.weight;
@@ -100,37 +97,71 @@ async function validarSesion() {
     carrito = data.carrito || [];
     actualizarCarrito();
     await cargarProductos();
+    
+    // INICIAR LA LECTURA DE DATOS REALES
+    iniciarLecturaIoT(); 
+
   } catch (err) {
     console.error("Error al validar sesión:", err);
-    // Opcional: si falla la conexión, ¿lo dejamos pasar o lo sacamos?
-    // Por ahora solo alertamos
+    localStorage.clear();
+    window.location.href = 'login.html';
   }
 }
 
 // === CERRAR SESIÓN ===
 cerrarSesionBtn.addEventListener('click', async () => {
-  try {
-      await fetch(`${API_BASE}/api/logout`, { method: 'POST' });
-  } catch (e) {}
-  
-  localStorage.clear(); // Borra ID y ROL
+  try { await fetch(`${API_BASE}/api/logout`, { method: 'POST' }); } catch (e) {}
+  localStorage.clear();
   alert('Sesión cerrada.');
   window.location.href = 'login.html';
 });
 
-// === SENSOR SIMULADO IoT ===
-function generarDatosIOT() {
-  const bpm = Math.floor(Math.random() * (100 - 60 + 1)) + 60;
-  const ox = Math.floor(Math.random() * (100 - 92 + 1)) + 92;
-  const hrv = Math.floor(Math.random() * 100);
+// ==================================================
+// === DATOS REALES IOT (ARDUINO) ===
+// ==================================================
+async function obtenerDatosRealesIOT() {
+  if (!userId) return;
 
-  heartRate.textContent = `${bpm} bpm`;
-  oxygen.textContent = `${ox}%`;
-  stress.textContent = hrv < 40 ? "Alto" : hrv < 70 ? "Medio" : "Bajo";
+  try {
+    // Llamamos a nuestro servidor
+    const res = await fetch(`${API_BASE}/api/iot-data`, {
+        headers: { 'x-uid': userId }
+    });
 
-  if (hrv < 40) stressAdvice.textContent = "Tu nivel de estrés es alto. Respira profundo y relájate.";
-  else if (hrv < 70) stressAdvice.textContent = "Estrés moderado. Mantén tus hábitos saludables.";
-  else stressAdvice.textContent = "Excelente, estás tranquilo.";
+    if (!res.ok) return; // Si falla silenciosamente, intentamos en la próxima vuelta
+
+    const data = await res.json();
+
+    // Actualizamos la interfaz con los datos reales
+    heartRateEl.textContent = `${data.heartRate} bpm`;
+    oxygenEl.textContent = `${data.oxygen}%`;
+
+    // Lógica visual para el Estrés (HRV o calculado)
+    const hrv = data.stress; 
+    stressEl.textContent = hrv > 70 ? "Alto" : hrv > 40 ? "Medio" : "Bajo";
+
+    // Consejos basados en datos reales
+    if (data.oxygen < 90) {
+        stressAdvice.textContent = "⚠️ Tu oxigenación es baja. Respira profundo.";
+        stressAdvice.style.color = "red";
+    } else if (hrv > 70 || data.heartRate > 100) {
+        stressAdvice.textContent = "Nivel de estrés o ritmo cardiaco elevado. Toma un descanso.";
+        stressAdvice.style.color = "orange";
+    } else {
+        stressAdvice.textContent = "Tus signos vitales están estables. ¡Bien hecho!";
+        stressAdvice.style.color = "green";
+    }
+
+  } catch (error) {
+    console.error("Error obteniendo datos del sensor:", error);
+  }
+}
+
+function iniciarLecturaIoT() {
+    // Llamamos una vez inmediatamente
+    obtenerDatosRealesIOT();
+    // Y luego cada 3 segundos
+    setInterval(obtenerDatosRealesIOT, 3000);
 }
 
 // === CALCULAR IMC ===
@@ -169,7 +200,7 @@ async function calcularIMCFirebase(peso, estatura) {
   mostrarEjercicios();
 }
 
-// === EJERCICIOS ===
+// === EJERCICIOS (Datos estáticos) ===
 const ejerciciosPorIMC = {
   bajo_peso: [
     { nombre: "Sentadillas", duracion: "3x15", beneficio: "Gana masa muscular" },
@@ -198,7 +229,6 @@ function mostrarEjercicios() {
     tablaEjercicios.innerHTML = `<tr><td colspan="3">Calcula primero tu IMC.</td></tr>`;
     return;
   }
-
   const ejercicios = ejerciciosPorIMC[categoriaIMC] || [];
   tablaEjercicios.innerHTML = ejercicios.map(ej =>
     `<tr><td>${ej.nombre}</td><td>${ej.duracion}</td><td>${ej.beneficio}</td></tr>`
@@ -209,7 +239,7 @@ function mostrarEjercicios() {
 async function cargarProductos() {
   try {
     const res = await fetch(`${API_BASE}/api/products`);
-    if (!res.ok) throw new Error("No se pudieron cargar los productos");
+    if (!res.ok) throw new Error("Error productos");
     productosDisponibles = await res.json();
 
     carrusel.innerHTML = '';
@@ -283,9 +313,7 @@ async function guardarCarritoEnDB() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ uid: userId, carrito })
     });
-  } catch (err) {
-    console.error("Error al guardar carrito:", err);
-  }
+  } catch (err) { console.error(err); }
 }
 
 function asignarEventosCarrito() {
@@ -295,6 +323,7 @@ function asignarEventosCarrito() {
       if (!producto) return;
       carrito.push(producto);
       actualizarCarrito();
+      // Animación simple
       contadorCarrito.style.transform = 'scale(1.3)';
       setTimeout(() => contadorCarrito.style.transform = 'scale(1)', 200);
     });
@@ -302,14 +331,14 @@ function asignarEventosCarrito() {
 }
 
 comprarBtn.addEventListener('click', () => {
-  if (carrito.length === 0) return alert('Tu carrito está vacío.');
-  alert('Compra realizada con éxito.');
+  if (carrito.length === 0) return alert('Carrito vacío.');
+  alert('Compra realizada.');
   carrito = [];
   actualizarCarrito();
   modalCarritoOverlay.classList.remove('visible');
 });
 
-// === CARRUSEL ===
+// === CARRUSEL LOGIC ===
 let cardWidth = 0;
 let autoSlide;
 
@@ -353,9 +382,5 @@ calcBtn.addEventListener('click', () => {
 });
 
 edadCards.forEach(card => card.addEventListener('click', mostrarEjercicios));
-setInterval(generarDatosIOT, 5000);
-generarDatosIOT();
 
-// === INICIO ===
-validarSesion();
-iniciarAutoSlide();
+// === INICIO

@@ -45,6 +45,7 @@ app.use(
       "http://127.0.0.1:5502",
       "http://localhost:5502",
       "http://localhost:3000",
+      "https://aplicaciones-web-progresivas-5cbe.onrender.com" // Tu URL de Render
     ],
     credentials: true,
   })
@@ -144,6 +145,44 @@ app.get("/api/session", async (req, res) => {
   }
 });
 
+// --- IOT DATA (ARDUINO) ---
+app.get("/api/iot-data", async (req, res) => {
+  const uid = req.headers["x-uid"];
+  if (!uid) return res.status(400).json({ error: "UID required" });
+
+  try {
+    // Buscamos en users -> UID -> iotData
+    // IMPORTANTE: Asegúrate que en Firestore el campo se llame 'timestamp'
+    const snapshot = await db.collection("users").doc(uid)
+      .collection("iotData")
+      .orderBy("timestamp", "desc") 
+      .limit(1)
+      .get();
+
+    if (snapshot.empty) {
+      return res.json({ heartRate: 0, oxygen: 0, stress: 0 });
+    }
+
+    const doc = snapshot.docs[0].data();
+
+    // Calcular estrés simulado si no existe
+    let calculatedStress = doc.stress;
+    if (calculatedStress === undefined) {
+       calculatedStress = (doc.heartRate > 95) ? 80 : (doc.heartRate > 75 ? 45 : 20);
+    }
+
+    res.json({
+      heartRate: doc.heartRate || 0,
+      oxygen: doc.oxygen || 0,
+      stress: calculatedStress
+    });
+  } catch (err) {
+    console.error("Error getting IoT data:", err);
+    // Devolvemos valores por defecto si falla la consulta
+    res.json({ heartRate: 0, oxygen: 0, stress: 0 });
+  }
+});
+
 // --- CRUD USERS (ADMIN) ---
 app.get("/api/users", async (req, res) => {
   try {
@@ -156,17 +195,15 @@ app.get("/api/users", async (req, res) => {
   }
 });
 
-// --- ACTUALIZAR USUARIO (ADMIN) con contraseña ---
+// --- ACTUALIZAR USUARIO (ADMIN) ---
 app.put("/api/users/:id", async (req, res) => {
   const { id } = req.params;
   const { name, age, height, weight, role, password } = req.body;
 
   try {
-    // Actualizar Firestore
     const updateData = { name, age, height, weight, role };
     await db.collection("users").doc(id).update(updateData);
 
-    // Actualizar contraseña en Firebase Auth si se proporcionó
     if (password && password.trim() !== "") {
       await admin.auth().updateUser(id, { password });
     }
