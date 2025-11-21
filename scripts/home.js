@@ -101,7 +101,7 @@ async function validarSesion() {
 }
 
 // ===============================
-// 4. DATOS REALES IOT (SIN SIMULACIÓN)
+// 4. DATOS REALES IOT
 // ===============================
 async function obtenerDatosRealesIOT() {
   if (!userId) return;
@@ -149,11 +149,135 @@ async function obtenerDatosRealesIOT() {
 
 function iniciarLecturaIoT() {
     obtenerDatosRealesIOT();
-    setInterval(obtenerDatosRealesIOT, 3000); // Consulta cada 3 segundos
+    setInterval(obtenerDatosRealesIOT, 3000); 
 }
 
 // ===============================
-// 5. RESTO DE FUNCIONES (CARRITO, IMC, ETC)
+// 5. FUNCIONES DE PRODUCTOS Y CARRITO (CORREGIDAS)
+// ===============================
+
+async function cargarProductos() {
+  try {
+    const res = await fetch(`${API_BASE}/api/products`);
+    if (!res.ok) throw new Error("Error productos");
+    productosDisponibles = await res.json();
+    carrusel.innerHTML = '';
+    
+    if (productosDisponibles.length === 0) {
+      carrusel.innerHTML = '<p>No hay productos. <a href="/api/seed-products" target="_blank">Click para restaurar</a></p>';
+      return;
+    }
+
+    productosDisponibles.forEach(prod => {
+      const agotado = prod.stock <= 0;
+      const tarjeta = document.createElement('div');
+      tarjeta.className = `producto-card ${agotado ? 'agotado' : ''}`;
+      
+      // AQUÍ AGREGUÉ TODOS LOS DATA-ATTRIBUTES NECESARIOS
+      tarjeta.innerHTML = `
+        <img src="${prod.img}" alt="${prod.nombre}">
+        <h3>${prod.nombre}</h3>
+        <p>${prod.descripcion}</p>
+        <div class="producto-footer">
+          <span class="precio">$${prod.precio} MXN</span>
+          <button class="agregar-carrito" 
+             data-id="${prod.id}" 
+             data-nombre="${prod.nombre}"
+             data-precio="${prod.precio}"
+             data-stock="${prod.stock}"
+             ${agotado ? 'disabled' : ''}>
+             ${agotado ? 'Agotado' : '🛒'}
+          </button>
+        </div>`;
+      carrusel.appendChild(tarjeta);
+    });
+    
+    calcularCarrusel();
+    asignarEventosCarrito(); // Llamada a la nueva función de eventos
+    actualizarCarrito();     // Para checar si alguno debe empezar bloqueado
+
+  } catch (error) { console.error(error); }
+}
+
+function asignarEventosCarrito() {
+  document.querySelectorAll('.agregar-carrito').forEach(btn => {
+    // Clonamos para eliminar eventos viejos si se recarga
+    const nuevoBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(nuevoBtn, btn);
+
+    nuevoBtn.addEventListener('click', () => {
+       const id = nuevoBtn.dataset.id;
+       const nombre = nuevoBtn.dataset.nombre;
+       const precio = parseFloat(nuevoBtn.dataset.precio);
+       const stock = parseInt(nuevoBtn.dataset.stock);
+
+       // Validar Stock
+       const cantidadEnCarrito = carrito.filter(i => i.id === id).length;
+       
+       if (cantidadEnCarrito >= stock) {
+          alert("¡Stock máximo alcanzado!");
+          return;
+       }
+
+       // Agregar al carrito
+       carrito.push({ id, nombre, precio });
+       actualizarCarrito();
+
+       // Animación
+       contadorCarrito.style.transform = 'scale(1.3)';
+       setTimeout(() => contadorCarrito.style.transform = 'scale(1)', 200);
+    });
+  });
+}
+
+function actualizarCarrito() {
+  // 1. Renderizar lista
+  listaCarrito.innerHTML = '';
+  let total = 0;
+  if(carrito.length===0) carritoVacioMsg.classList.add('visible'); else carritoVacioMsg.classList.remove('visible');
+  
+  carrito.forEach((item, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${item.nombre}</span><span>$${item.precio}</span><button class="eliminar" data-i="${i}">🗑️</button>`;
+    listaCarrito.appendChild(li);
+    total += item.precio;
+  });
+  
+  totalCarrito.textContent = `Total: $${total} MXN`;
+  contadorCarrito.textContent = carrito.length;
+  
+  // Eventos eliminar
+  document.querySelectorAll('.eliminar').forEach(b => b.addEventListener('click', ()=> {
+      carrito.splice(b.dataset.i, 1); 
+      actualizarCarrito();
+  }));
+  
+  // Guardar en BD
+  if(userId) fetch(`${API_BASE}/api/update-cart`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({uid:userId, carrito})});
+
+  // 2. BLOQUEO VISUAL DE BOTONES (STOCK)
+  const botones = document.querySelectorAll('.agregar-carrito');
+  botones.forEach(btn => {
+      const id = btn.dataset.id;
+      const stock = parseInt(btn.dataset.stock);
+      const enCarrito = carrito.filter(i => i.id === id).length;
+
+      if (enCarrito >= stock) {
+          btn.disabled = true;
+          btn.textContent = "Max Stock";
+          btn.style.backgroundColor = "#ccc";
+          btn.style.cursor = "not-allowed";
+      } else {
+          btn.disabled = false;
+          btn.textContent = "🛒";
+          btn.style.backgroundColor = ""; 
+          btn.style.cursor = "pointer";
+      }
+  });
+}
+
+// ===============================
+// 6. RESTO DE FUNCIONES (IMC, EJERCICIOS, CARRUSEL)
 // ===============================
 
 cerrarSesionBtn.addEventListener('click', async () => {
@@ -196,65 +320,6 @@ function mostrarEjercicios() {
   if (!categoriaIMC) { tablaEjercicios.innerHTML = `<tr><td colspan="3">Calcula IMC primero</td></tr>`; return; }
   const lista = ejerciciosPorIMC[categoriaIMC] || [];
   tablaEjercicios.innerHTML = lista.map(e => `<tr><td>${e.nombre}</td><td>${e.duracion}</td><td>${e.beneficio}</td></tr>`).join('');
-}
-
-async function cargarProductos() {
-  try {
-    const res = await fetch(`${API_BASE}/api/products`);
-    if (!res.ok) throw new Error("Error productos");
-    productosDisponibles = await res.json();
-    carrusel.innerHTML = '';
-    
-    if (productosDisponibles.length === 0) {
-      carrusel.innerHTML = '<p>No hay productos. <a href="/api/seed-products" target="_blank">Click para restaurar</a></p>';
-      return;
-    }
-
-    productosDisponibles.forEach(prod => {
-      const agotado = prod.stock <= 0;
-      const tarjeta = document.createElement('div');
-      tarjeta.className = `producto-card ${agotado ? 'agotado' : ''}`;
-      tarjeta.innerHTML = `
-        <img src="${prod.img}" alt="${prod.nombre}">
-        <h3>${prod.nombre}</h3>
-        <p>${prod.descripcion}</p>
-        <div class="producto-footer">
-          <span class="precio">$${prod.precio} MXN</span>
-          <button class="agregar-carrito" data-id="${prod.id}" ${agotado ? 'disabled' : ''}>🛒</button>
-        </div>`;
-      carrusel.appendChild(tarjeta);
-    });
-    
-    // Configurar botones
-    document.querySelectorAll('.agregar-carrito').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const p = productosDisponibles.find(x => x.id === btn.dataset.id);
-            if(p) { carrito.push(p); actualizarCarrito(); }
-        });
-    });
-    
-    calcularCarrusel();
-  } catch (error) { console.error(error); }
-}
-
-function actualizarCarrito() {
-  listaCarrito.innerHTML = '';
-  let total = 0;
-  if(carrito.length===0) carritoVacioMsg.classList.add('visible'); else carritoVacioMsg.classList.remove('visible');
-  carrito.forEach((item, i) => {
-    const li = document.createElement('li');
-    li.innerHTML = `<span>${item.nombre}</span><span>$${item.precio}</span><button class="eliminar" data-i="${i}">🗑️</button>`;
-    listaCarrito.appendChild(li);
-    total += item.precio;
-  });
-  totalCarrito.textContent = `Total: $${total}`;
-  contadorCarrito.textContent = carrito.length;
-  
-  document.querySelectorAll('.eliminar').forEach(b => b.addEventListener('click', ()=> {
-      carrito.splice(b.dataset.i, 1); actualizarCarrito();
-  }));
-  
-  if(userId) fetch(`${API_BASE}/api/update-cart`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({uid:userId, carrito})});
 }
 
 // Carrusel Lógica
