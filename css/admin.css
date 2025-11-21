@@ -56,9 +56,17 @@ header button:hover {
 main { flex: 1; padding: 2rem; }
 main h2 { font-size: 1.6rem; margin-bottom: 1.5rem; }
 
+/* CONTENEDOR TABLA PARA SCROLL */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 0.8rem;
+}
+
 /* TABLA */
 table {
   width: 100%;
+  min-width: 650px; /* evita que se aplaste en celulares */
   border-collapse: separate;
   border-spacing: 0;
   border-radius: 0.8rem;
@@ -83,9 +91,9 @@ td:last-child .delete-btn:hover { background-color: var(--color-boton-eliminar-h
 td:last-child .edit-btn { background-color: var(--color-boton-guardar); }
 td:last-child .edit-btn:hover { background-color: var(--color-boton-guardar-hover); }
 
-/* ===== MODAL CORREGIDO ===== */
+/* ===== MODAL ===== */
 .modal {
-  display: none; /* empieza oculto */
+  display: none;
   position: fixed;
   z-index: 1000;
   top: 0;
@@ -93,8 +101,7 @@ td:last-child .edit-btn:hover { background-color: var(--color-boton-guardar-hove
   width: 100%;
   height: 100%;
   background-color: var(--color-modal-fondo);
-
-  justify-content: center; /* se activa cuando JS pone display:flex */
+  justify-content: center;
   align-items: center;
 }
 
@@ -156,6 +163,29 @@ td:last-child .edit-btn:hover { background-color: var(--color-boton-guardar-hove
 }
 
 /* RESPONSIVE */
+@media screen and (max-width: 992px) {
+  header h1 { font-size: 1.4rem; }
+  main { padding: 1.5rem; }
+}
+
 @media screen and (max-width: 768px) {
+  header {
+    flex-direction: column;
+    gap: 0.8rem;
+    text-align: center;
+  }
+
+  td:last-child { flex-direction: column; }
+  td:last-child button { width: 100%; }
+
   .modal-content { width: 90%; padding: 1.5rem; }
+}
+
+@media screen and (max-width: 480px) {
+  header h1 { font-size: 1.2rem; }
+  main h2 { font-size: 1.3rem; }
+
+  table { min-width: 500px; }
+
+  td { padding: 0.6rem; font-size: 0.85rem; }
 }

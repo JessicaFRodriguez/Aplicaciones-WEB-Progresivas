@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="css/admin.css">
 </head>
 <body style="display: none;">
+  
   <header>
     <h1>Panel de Administrador</h1>
     <button id="logoutBtn">Cerrar sesión</button>
@@ -14,40 +15,64 @@
 
   <main>
     <h2>Usuarios Registrados</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Edad</th>
-          <th>Estatura</th>
-          <th>Peso</th>
-          <th>Email</th>
-          <th>Rol</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody id="usuariosTabla">
+
+    <!-- WRAPPER PARA HACER LA TABLA RESPONSIVE -->
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Edad</th>
+            <th>Estatura</th>
+            <th>Peso</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="usuariosTabla">
         </tbody>
-    </table>
+      </table>
+    </div>
+    <!-- FIN WRAPPER -->
+
   </main>
 
   <div id="editModal" class="modal">
     <div class="modal-content">
       <span id="closeModal">&times;</span>
       <h3>Editar Usuario</h3>
+
       <form id="editForm">
         <input type="hidden" id="editUid">
-        <label>Nombre: <input type="text" id="editName"></label>
-        <label>Edad: <input type="number" id="editAge"></label>
-        <label>Estatura: <input type="number" step="0.01" id="editHeight"></label>
-        <label>Peso: <input type="number" step="0.1" id="editWeight"></label>
-        <label>Rol: 
+
+        <label>Nombre:
+          <input type="text" id="editName">
+        </label>
+
+        <label>Edad:
+          <input type="number" id="editAge">
+        </label>
+
+        <label>Estatura:
+          <input type="number" step="0.01" id="editHeight">
+        </label>
+
+        <label>Peso:
+          <input type="number" step="0.1" id="editWeight">
+        </label>
+
+        <label>Rol:
           <select id="editRole">
             <option value="user">Usuario</option>
             <option value="admin">Admin</option>
           </select>
         </label>
-        <label>Contraseña: <input type="password" id="editPassword" placeholder="Nueva contraseña (opcional)"></label>
+
+        <label>Contraseña:
+          <input type="password" id="editPassword" placeholder="Nueva contraseña (opcional)">
+        </label>
+
         <button type="submit" class="saveBtn">Guardar Cambios</button>
       </form>
     </div>
