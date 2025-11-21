@@ -189,3 +189,51 @@ td:last-child .edit-btn:hover { background-color: var(--color-boton-guardar-hove
 
   td { padding: 0.6rem; font-size: 0.85rem; }
 }
+
+/* ======== RESPONSIVE: MOSTRAR COMO CARDS EN CELULAR ======== */
+@media screen and (max-width: 600px) {
+
+  table thead {
+    display: none;
+  }
+
+  table, tbody, tr, td {
+    display: block;
+    width: 100%;
+  }
+
+  table tr {
+    background: white;
+    margin-bottom: 1rem;
+    border-radius: 0.8rem;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  table td {
+    border: none;
+    padding: 0.6rem 0;
+    font-size: 0.95rem;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--color-header);
+  }
+
+  /* Botones stacking */
+  td[data-label="Acciones"] {
+    margin-top: 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  td[data-label="Acciones"] button {
+    width: 100%;
+  }
+}
+
