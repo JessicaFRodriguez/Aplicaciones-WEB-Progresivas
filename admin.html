@@ -6,7 +6,7 @@
   <title>Panel de Administrador</title>
   <link rel="stylesheet" href="css/admin.css">
 </head>
-<body>
+<body style="display: none;">
   <header>
     <h1>Panel de Administrador</h1>
     <button id="logoutBtn">Cerrar sesión</button>
@@ -27,12 +27,10 @@
         </tr>
       </thead>
       <tbody id="usuariosTabla">
-        <!-- Usuarios se cargan dinámicamente -->
-      </tbody>
+        </tbody>
     </table>
   </main>
 
-  <!-- Modal de edición -->
   <div id="editModal" class="modal">
     <div class="modal-content">
       <span id="closeModal">&times;</span>

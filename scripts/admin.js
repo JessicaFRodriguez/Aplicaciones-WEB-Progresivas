@@ -1,6 +1,24 @@
 // ===============================
-// ADMIN.JS - Render Ready Version
+// 1. SEGURIDAD (EL PORTERO)
 // ===============================
+const userId = localStorage.getItem("userId");
+
+// Si NO hay usuario guardado, expulsar inmediatamente
+if (!userId) {
+  window.location.href = "login.html";
+  // Detenemos la ejecución para que no cargue nada más
+  throw new Error("Acceso denegado: No hay sesión activa.");
+}
+
+// Si SÍ hay usuario, hacemos visible la página
+document.body.style.display = "block";
+
+
+// ===============================
+// 2. LÓGICA DE ADMIN
+// ===============================
+
+// Detecta automáticamente si estás en localhost o en Render
 const BACKEND_URL = window.location.origin;
 
 const usersTable = document.getElementById("usuariosTabla");
@@ -10,12 +28,21 @@ const editModal = document.getElementById("editModal");
 const closeModal = document.getElementById("closeModal");
 const editForm = document.getElementById("editForm");
 
-// ===============================
+// -------------------------------
 // Cargar usuarios
-// ===============================
+// -------------------------------
 async function loadUsers() {
   try {
     const res = await fetch(`${BACKEND_URL}/api/users`);
+
+    // Capa de seguridad extra: Si el servidor responde "No autorizado" (401/403)
+    if (res.status === 401 || res.status === 403) {
+      alert("Tu sesión ha expirado.");
+      localStorage.removeItem("userId");
+      window.location.href = "login.html";
+      return;
+    }
+
     const users = await res.json();
 
     if (!Array.isArray(users) || users.length === 0) {
@@ -42,6 +69,7 @@ async function loadUsers() {
       )
       .join("");
 
+    // Asignar eventos a los botones recién creados
     document.querySelectorAll(".delete-btn").forEach((btn) => {
       btn.addEventListener("click", () => deleteUser(btn.dataset.uid));
     });
@@ -54,9 +82,9 @@ async function loadUsers() {
   }
 }
 
-// ===============================
+// -------------------------------
 // Borrar usuario
-// ===============================
+// -------------------------------
 async function deleteUser(uid) {
   if (!confirm("¿Seguro que deseas eliminar este usuario?")) return;
 
@@ -64,23 +92,22 @@ async function deleteUser(uid) {
     const res = await fetch(`${BACKEND_URL}/api/users/${uid}`, {
       method: "DELETE",
     });
-    const data = await res.json();
-
-    if (data.success) {
+    
+    if (res.ok) {
       alert("Usuario eliminado correctamente");
-      loadUsers();
+      loadUsers(); // Recargar tabla
     } else {
       alert("Error al eliminar usuario");
     }
   } catch (err) {
     console.error(err);
-    alert("Error al eliminar usuario");
+    alert("Error de conexión");
   }
 }
 
-// ===============================
-// Editar usuario
-// ===============================
+// -------------------------------
+// Editar usuario (Abrir Modal)
+// -------------------------------
 function editUser(uid) {
   const row = Array.from(usersTable.rows).find(
     (r) => r.querySelector(".edit-btn")?.dataset.uid === uid
@@ -93,22 +120,22 @@ function editUser(uid) {
   document.getElementById("editHeight").value = row.cells[2].textContent;
   document.getElementById("editWeight").value = row.cells[3].textContent;
   document.getElementById("editRole").value = row.cells[5].textContent;
-  document.getElementById("editPassword").value = "";
+  document.getElementById("editPassword").value = ""; // Limpiar password
 
   editModal.style.display = "flex";
 }
 
-// ===============================
+// -------------------------------
 // Cerrar modal
-// ===============================
+// -------------------------------
 closeModal.addEventListener("click", () => (editModal.style.display = "none"));
 window.addEventListener("click", (e) => {
   if (e.target === editModal) editModal.style.display = "none";
 });
 
-// ===============================
-// Guardar cambios (actualizar usuario)
-// ===============================
+// -------------------------------
+// Guardar cambios (PUT)
+// -------------------------------
 editForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -132,9 +159,8 @@ editForm.addEventListener("submit", async (e) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const data = await res.json();
 
-    if (data.success) {
+    if (res.ok) {
       alert("Usuario actualizado correctamente");
       editModal.style.display = "none";
       loadUsers();
@@ -143,30 +169,28 @@ editForm.addEventListener("submit", async (e) => {
     }
   } catch (err) {
     console.error(err);
-    alert("Error al actualizar usuario");
+    alert("Error de conexión");
   }
 });
 
-// ===============================
+// -------------------------------
 // Cerrar sesión
-// ===============================
+// -------------------------------
 logoutBtn.addEventListener("click", async () => {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/logout`, { method: "POST" });
-    const data = await res.json();
-
-    if (data.success) {
-      alert("Sesión cerrada");
-      localStorage.removeItem("userId");
-      window.location.href = "login.html";
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Error al cerrar sesión");
+    // Intentamos avisar al backend (opcional, pero recomendado)
+    await fetch(`${BACKEND_URL}/api/logout`, { method: "POST" });
+  } catch (error) {
+    console.warn("No se pudo contactar al servidor para logout, cerrando localmente.");
   }
+
+  // Siempre limpiamos el navegador
+  alert("Sesión cerrada");
+  localStorage.removeItem("userId");
+  window.location.href = "login.html";
 });
 
-// ===============================
+// -------------------------------
 // Inicialización
-// ===============================
+// -------------------------------
 loadUsers();
