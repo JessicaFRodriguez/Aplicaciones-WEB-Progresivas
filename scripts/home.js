@@ -1,5 +1,21 @@
 // ===============================
-// HOME.JS - VivePlen App Completo
+// 1. SEGURIDAD: EL "PORTERO"
+// ===============================
+// Esto se ejecuta ANTES de cargar nada más
+const storedUserId = localStorage.getItem("userId");
+
+if (!storedUserId) {
+  // Si no hay ID en el navegador, adiós inmediato
+  window.location.href = "login.html";
+  throw new Error("Acceso denegado: No logueado.");
+}
+
+// Si hay ID, mostramos la página (que estaba oculta con display:none)
+document.body.style.display = "block";
+
+
+// ===============================
+// 2. HOME.JS - Lógica de la App
 // ===============================
 
 // === ELEMENTOS DEL DOM ===
@@ -35,18 +51,26 @@ const estaturaRegistrada = document.getElementById('estaturaRegistrada');
 
 let imcGlobal = null;
 let categoriaIMC = "";
-let userId = null;
+let userId = null; // Se llenará con validarSesion
 let carrito = [];
 let productosDisponibles = [];
 
-const API_BASE = window.location.origin; // <- FUNCIONA EN RENDER
+const API_BASE = window.location.origin;
 
-// === SESIÓN DE USUARIO ===
+// === SESIÓN DE USUARIO (Validación Servidor) ===
 async function validarSesion() {
   try {
     const res = await fetch(`${API_BASE}/api/session`, {
       headers: { 'x-uid': localStorage.getItem('userId') }
     });
+    
+    // Si el servidor responde 401/403 o error
+    if (!res.ok) {
+        localStorage.clear();
+        window.location.href = 'login.html';
+        return;
+    }
+
     const data = await res.json();
 
     if (!data.loggedIn) {
@@ -55,6 +79,7 @@ async function validarSesion() {
       return;
     }
 
+    // Si todo está bien, cargamos datos
     userId = data.uid;
     if (data.weight) {
       pesoInput.value = data.weight;
@@ -77,14 +102,18 @@ async function validarSesion() {
     await cargarProductos();
   } catch (err) {
     console.error("Error al validar sesión:", err);
-    alert("Error de conexión. Revisa tu servidor.");
+    // Opcional: si falla la conexión, ¿lo dejamos pasar o lo sacamos?
+    // Por ahora solo alertamos
   }
 }
 
 // === CERRAR SESIÓN ===
 cerrarSesionBtn.addEventListener('click', async () => {
-  await fetch(`${API_BASE}/api/logout`, { method: 'POST' });
-  localStorage.removeItem('userId');
+  try {
+      await fetch(`${API_BASE}/api/logout`, { method: 'POST' });
+  } catch (e) {}
+  
+  localStorage.clear(); // Borra ID y ROL
   alert('Sesión cerrada.');
   window.location.href = 'login.html';
 });
