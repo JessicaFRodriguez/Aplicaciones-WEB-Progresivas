@@ -50,19 +50,19 @@ async function loadUsers() {
     }
 
     usersTable.innerHTML = users.map(u => `
-  <tr>
-    <td data-label="Nombre">${u.name || "-"}</td>
-    <td data-label="Edad">${u.age || "-"}</td>
-    <td data-label="Estatura">${u.height || "-"}</td>
-    <td data-label="Peso">${u.weight || "-"}</td>
-    <td data-label="Email">${u.email || "-"}</td>
-    <td data-label="Rol">${u.role || "-"}</td>
-    <td data-label="Acciones">
-      <button class="delete-btn" data-uid="${u.uid}">🗑</button>
-      <button class="edit-btn" data-uid="${u.uid}">✏️</button>
-    </td>
-  </tr>
-`).join("");
+      <tr>
+        <td>${u.name || "-"}</td>
+        <td>${u.age || "-"}</td>
+        <td>${u.height || "-"}</td>
+        <td>${u.weight || "-"}</td>
+        <td>${u.email || "-"}</td>
+        <td>${u.role || "-"}</td>
+        <td>
+          <button class="delete-btn" data-uid="${u.uid}">🗑</button>
+          <button class="edit-btn" data-uid="${u.uid}">✏️</button>
+        </td>
+      </tr>
+    `).join("");
 
     document.querySelectorAll(".delete-btn").forEach(btn => 
       btn.addEventListener("click", () => deleteUser(btn.dataset.uid))
